@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Pedido Recibido! | Arvinea Organic</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Estilos específicos para esta página de gracias */
+        .gracias-container {
+            text-align: center;
+            padding: 1rem 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .icono-exito {
+            font-size: 5rem;
+            color: #27ae60; /* Verde éxito */
+            margin-bottom: 1.5rem;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .titulo-gracias {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .texto-gracias {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        /* TARJETA RESUMEN (NUEVO) */
+        .resumen-pedido {
+            background: #f8f9fa;
+            border: 2px dashed #e1e1e1;
+            padding: 25px;
+            margin: 0 auto 30px auto; /* Centrado y separado */
+            border-radius: 12px;
+            text-align: left;
+            max-width: 380px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .dato-fila { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 12px; 
+            font-size: 1.05rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .dato-fila:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        
+        .dato-label { font-weight: 600; color: #666; }
+        .dato-valor { color: #5a2a82; font-weight: 800; font-family: 'Segoe UI', sans-serif; }
+        
+        .nota-final {
+            font-size: 0.85rem;
+            color: #000000;
+            margin-top: 15px;
+            font-weight: 700;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Botón WhatsApp destacado */
+        .btn-wsp {
+            background-color: #25D366;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+            transition: transform 0.2s;
+            margin-bottom: 15px;
+        }
+        .btn-wsp:hover { transform: scale(1.05); background-color: #20bd5a; }
+
+        .btn-volver-tienda {
+            display: block;
+            margin-top: 1rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .btn-volver-tienda:hover { color: var(--primary); text-decoration: underline; }
+
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <header class="header-principal" style="justify-content: center;">
+        <div class="logo-container">
+            <img src="img/logo.jpg" alt="Arvinea Logo" class="logo-img">
+        </div>
+    </header>
+
+    <main class="contenedor">
+        <div class="gracias-container">
+            <div class="icono-exito">
+                <i class="fas fa-check-circle"></i>
+            </div>
+
+            <h1 class="titulo-gracias">¡Pedido Ingresado!</h1>
+            
+            <p class="texto-gracias">
+                Ya tenemos tus datos. Para activar el despacho,<br>
+                realiza la transferencia siguiendo estas instrucciones:
+            </p>
+
+            <div class="resumen-pedido" style="background: #fff8e1; border: 2px dashed #ffe082;">
+                <div class="nota-final" style="color: #856404; font-size: 1rem; margin-top: 0; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>MUY IMPORTANTE</strong>
+                </div>
+                
+                <p style="margin: 10px 0; font-size: 0.95rem; color: #555;">
+                    Al transferir, debes escribir este código en el <strong>Asunto</strong> o <strong>Mensaje</strong> del banco:
+                </p>
+
+                <div style="text-align: center; margin: 15px 0;">
+                    <span class="dato-valor" id="lbl-id" style="font-size: 1.8rem; background: white; padding: 8px 20px; border: 2px solid #000; border-radius: 4px;">Cargando...</span>
+                </div>
+                
+                <p style="font-size: 0.85rem; color: #666; margin:0;">
+                    (Si lo pones, tu pago se aprueba automáticamente en aprox. 10 min)
+                </p>
+            </div>
+
+            <div class="resumen-pedido" style="text-align: center; border: 1px solid #eee;">
+                <h3 style="color: var(--primary); margin-top: 0; font-size: 1.2rem;">Datos de Transferencia</h3>
+                
+                <div style="font-size: 1.1rem; margin-bottom: 5px;">
+                    Monto: <strong id="lbl-total" style="color: var(--primary);">$0</strong>
+                </div>
+
+                <div style="background: #f4f6f8; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; font-size: 0.95rem; color: #333;">
+                    <p style="margin: 5px 0;"><strong>Banco:</strong> Banco Estado</p>
+                    <p style="margin: 5px 0;"><strong>Tipo:</strong> Cuenta Vista / Chequera Electrónica</p>
+                    <p style="margin: 5px 0;"><strong>N° Cuenta:</strong> 1049386009</p>
+                    <p style="margin: 5px 0;"><strong>RUT:</strong> 21.917.234-6</p>
+                    <p style="margin: 5px 0;"><strong>Nombre:</strong> Arvinea Organic</p>
+                    <p style="margin: 5px 0;"><strong>Correo:</strong> arvinea.organic@gmail.com</p>
+                </div>
+            </div>
+
+            <a id="btn-wsp-dynamic" href="#" class="btn-wsp" target="_blank">
+                <i class="fab fa-whatsapp"></i> Agregar a Arvinea
+            </a>
+
+            <br>
+            <a href="index.html" class="btn-volver-tienda">&larr; Volver al inicio</a>
+        </div>
+    </main>
+
+    <footer class="footer-principal" style="margin-top: 0;">
+        <div class="footer-content">
+            <p class="copyright">&copy; 2026 Arvinea Organic</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. Recuperar datos de la memoria del navegador
+            // Si no encuentra nada (ej: entraron directo al link), pone valores por defecto
+            const id = localStorage.getItem('ultimo_pedido_id') || "Pendiente";
+            const total = localStorage.getItem('ultimo_pedido_total') || "0";
+
+            // 2. Mostrar en la tarjeta
+            document.getElementById('lbl-id').innerText = id;
+            document.getElementById('lbl-total').innerText = "$" + parseInt(total).toLocaleString('es-CL');
+
+            // 3. Crear mensaje personalizado para WhatsApp
+            // Mensaje: "Hola Arvinea, acabo de hacer el pedido #ARV-XXXX. ¿Me confirmas?"
+            const wspMsg = `Hola Arvinea, acabo de hacer el pedido ${id}. ¿Me confirmas la recepción?`;
+            
+            // Codificar para URL (cambia espacios por %20, etc.)
+            const wspLink = `https://wa.me/56950323402?text=${encodeURIComponent(wspMsg)}`;
+            
+            // Asignar al botón
+            document.getElementById('btn-wsp-dynamic').href = wspLink;
+        });
+    </script>
+
+</body>
+</html>
