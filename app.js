@@ -28,7 +28,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// --- LÓGICA DE ENTREGA (CORREGIDA) ---
+// --- LÓGICA DE ENTREGA  ---
 function setEntrega(tipo) {
     tipoEntrega = tipo; // Guardamos la elección en la variable global
     
@@ -58,7 +58,7 @@ function setEntrega(tipo) {
     }
 }
 
-// --- VALIDACIONES DE RUT (FALTABA ESTA FUNCIÓN) ---
+// --- VALIDACIONES DE RUT ---
 function formatoRut(input) {
     // Eliminar todo lo que no sea número o K
     let valor = input.value.replace(/[^0-9kK]/g, "");
@@ -155,7 +155,6 @@ function cambiarPestaña(tabId, vistaId, btnGroupId) {
 }
 
 // --- PROCESO FINAL ---
-// BUSCA ESTA FUNCIÓN Y REEMPLÁZALA COMPLETAMENTE
 async function procesarPedidoFinal() {
     // 1. OBTENER DATOS
     const nombre = document.getElementById('cliente-nombre').value;

@@ -23,13 +23,16 @@
         <!--CATEGORIAS-->
         <div class="categoria-wrapper">
             <button class="btn-categoria" onclick="irASeccion('valle-escondido')">Valle Escondido</button>
+            <button class="btn-categoria" onclick="irASeccion('bruma')">Bruma</button>
             <button class="btn-categoria gris">Próximamente</button>
         </div>
     </header>
 
     <main class="contenedor">
+        <!--LINEA VALLE ESCONDIDO-->
         <h2 id="valle-escondido" class="titulo-seccion">Valle Escondido</h2>
-        
+
+            <!--PRODUCTOS VALLE ESCONDIDO-->
         <div class="grid-productos" id="lista-productos">
             <article class="producto">
                 <div class="producto-img" onclick="verFotoGrande('img/solvalle250.png')">
@@ -67,25 +70,6 @@
                 </div>
             </article>
 
-            
-            <article class="producto">
-                <div class="producto-img" onclick="verFotoGrande('img/packsolsombra.png')">
-                    <img src="img/packsolsombra.png" alt="Pack Sol & Sombra">
-                </div>
-                <div class="producto-info">
-                    <div class="info-top">
-                        <h3>Pack Sol & Sombra del Valle 50% dcto!!!</h3>
-                        <p class="tipo">Mermeladas</p>
-                    </div>
-                    <div class="info-bottom">
-                        <p class="precio">$3.000</p>
-                        <button class="btn-agregar" onclick="abrirDetalle('Pack Sol & Sombra 50%', 3000, 'img/packsolsombra.png')">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-            </article>
-
             <article class="producto">
                 <div class="producto-img" onclick="verFotoGrande('img/sombravalle500.png')">
                     <img src="img/sombravalle500.png" alt="Sombra del Valle">
@@ -104,6 +88,26 @@
                 </div>
             </article>
         </div>
+        <!--LINEA BRUMA-->
+        <h2 id="bruma" class="titulo-seccion">Bruma</h2>
+
+            <!--PRODUCTOS BRUMA-->
+        <div class="grid-productos" id="lista-productos">
+            <article class="producto">
+                <div class="producto-img">
+                    <img src="img/proxproducto.png" alt="Próximamente">
+                </div>
+                <div class="producto-info">
+                    <div class="info-top">
+                        <h3></h3>
+                        <p class="tipo"></p>
+                    </div>
+                    <div class="info-bottom">
+                        <p class="precio"></p>
+                    </div>
+                </div>
+            </article>
+        </div>
     </main>
 
 <!--FOOTER-->
@@ -113,9 +117,9 @@
             <p><i class="fas fa-envelope"></i> arvinea.organic@gmail.com</p>
             <p><i class="fas fa-phone"></i> +56 9 5032 3402</p>
             <div class="redes-sociales">
-                <a href="#LINK IG"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.instagram.com/arvinea_cl"><i class="fab fa-instagram"></i></a>
                 <a href="#LINKFACE"><i class="fab fa-facebook"></i></a>
-                <a href="#LINKWSP"><i class="fab fa-whatsapp"></i></a>
+                <a href="https://wa.me/56950323402"><i class="fab fa-whatsapp"></i></a>
             </div>
             <hr>
             <p class="copyright">Desarrollado por TCSalinas &copy; 2026</p>
@@ -125,7 +129,7 @@
 
 
 
-
+<!--CARRITO-->
 
     <div id="btn-flotante-carrito" class="btn-flotante" onclick="toggleCarrito()">
         <div class="burbuja-cantidad" id="float-count">0</div>
@@ -147,10 +151,13 @@
             <div class="tab" id="tab-pago">Pago</div>
         </div>
 
+
+        <!--VISTA SECCION PEDIDO-->
         <div id="vista-pedido" class="sidebar-body">
             <div id="carrito-items"></div>
         </div>
 
+        <!--VISTA SECCION CHECKOUT-->
         <div id="vista-checkout" class="sidebar-body" style="display:none;">
             <div class="toggle-entrega">
                 <button id="btn-delivery" class="btn-toggle active" onclick="setEntrega('delivery')">
@@ -160,7 +167,7 @@
                     <i class="fas fa-walking"></i> Retiro Gratis
                 </button>
             </div>
-
+            <!--Info cliente-->
             <div class="form-grupo">
                 <label>Información del cliente</label>
                 <input type="text" id="cliente-nombre" placeholder="Nombre completo">
@@ -176,18 +183,23 @@
                 <p class="nota-input">*El costo de envío se coordina tras el pago.</p>
             </div>
 
+            <!--PUNTOS RETIRO PICKUP-->
             <div id="contenedor-retiro" class="form-grupo" style="display:none;">
                 <label>Punto de Retiro</label>
                 <select id="lugar-retiro">
                     <option value="">Selecciona un lugar...</option>
                     <option value="Metro Bellavista (L5)">Metro Bellavista de la Florida (Línea 5)</option>
-                    <option value="Plaza de Armas">Plaza de Armas (Santiago Centro)</option>
+                    <option value="Metro Vicente Valdés (L4,L5)">Metro Vicente Valdés (Línea 4 y 5)</option>
+                    <option value="Metro Baquedano (L1,L5)">Metro Baquedano (Línea 1 y 5)</option>
+                    <option value="Metro Los Heroes (L1,L2)">Metro Los Heroes (Línea 1 y 2)</option>
+                    
                 </select>
                 <p class="nota-input">*Horario exacto a coordinar por WhatsApp.</p>
             </div>
 
         </div>
 
+        <!--VISTA SECCION PAGO Y RESUMEN-->
         <div id="vista-pago" class="sidebar-body" style="display:none;">
     
             <div style="text-align: center; margin-top: 20px;">
@@ -199,8 +211,8 @@
             </div>
 
             <div style="background: white; border: 2px solid #eee; border-radius: 10px; margin: 20px 0; padding: 20px; text-align: center;">
-                <p style="margin:0; font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px;">Total a Pagar</p>
-                <p class="total-final" style="margin: 5px 0 0 0; font-size: 2.5rem; color: var(--text-main);">
+                <p style="text-align: center; margin:0; font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px;">Total a Pagar</p>
+                <p class="total-final" style="text-align: center; margin: 5px 0 0 0; font-size: 2.5rem; color: var(--text-main);">
                     <span id="total-final-pago">$0</span>
                 </p>
             </div>
