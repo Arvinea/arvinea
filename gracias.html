@@ -43,18 +43,6 @@
             max-width: 380px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
-        .dato-fila { 
-            display: flex; 
-            justify-content: space-between; 
-            margin-bottom: 12px; 
-            font-size: 1.05rem;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
-        }
-        .dato-fila:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        
-        .dato-label { font-weight: 600; color: #666; }
-        .dato-valor { color: #5a2a82; font-weight: 800; font-family: 'Segoe UI', sans-serif; }
         
         .nota-final {
             font-size: 0.85rem;
@@ -86,11 +74,11 @@
         .btn-volver-tienda {
             display: block;
             margin-top: 1rem;
-            color: var(--text-light);
+            color: #95a5a6; /* Usamos variable manual si no carga el CSS */
             text-decoration: none;
             font-size: 0.9rem;
         }
-        .btn-volver-tienda:hover { color: var(--primary); text-decoration: underline; }
+        .btn-volver-tienda:hover { color: #2d4f1e; text-decoration: underline; }
 
         @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
@@ -126,7 +114,7 @@
                 </p>
 
                 <div style="text-align: center; margin: 15px 0;">
-                    <span class="dato-valor" id="lbl-id" style="font-size: 1.8rem; background: white; padding: 8px 20px; border: 2px solid #000; border-radius: 4px;">Cargando...</span>
+                    <span class="dato-valor" id="lbl-id" style="font-size: 1.8rem; background: white; padding: 8px 20px; border: 2px solid #000; border-radius: 4px; font-weight:bold; color:#333;">Cargando...</span>
                 </div>
                 
                 <p style="font-size: 0.85rem; color: #666; margin:0;">
@@ -142,17 +130,16 @@
                 </div>
 
                 <div style="background: #f4f6f8; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; font-size: 0.95rem; color: #333;">
-                    <p style="margin: 5px 0;"><strong>Banco:</strong> Banco Estado</p>
-                    <p style="margin: 5px 0;"><strong>Tipo:</strong> Cuenta Vista / Chequera Electrónica</p>
-                    <p style="margin: 5px 0;"><strong>N° Cuenta:</strong> 1049386009</p>
-                    <p style="margin: 5px 0;"><strong>RUT:</strong> 21.917.234-6</p>
+                    <p style="margin: 5px 0;"><strong>Banco:</strong> Mercado Pago</p>
+                    <p style="margin: 5px 0;"><strong>Tipo:</strong> Cuenta Vista / Chequera</p>
+                    <p style="margin: 5px 0;"><strong>N° Cuenta:</strong> 1049386009</p> <p style="margin: 5px 0;"><strong>RUT:</strong> 21.917.234-6</p>
                     <p style="margin: 5px 0;"><strong>Nombre:</strong> Arvinea Organic</p>
                     <p style="margin: 5px 0;"><strong>Correo:</strong> arvinea.organic@gmail.com</p>
                 </div>
             </div>
 
             <a id="btn-wsp-dynamic" href="#" class="btn-wsp" target="_blank">
-                <i class="fab fa-whatsapp"></i> Agregar a Arvinea
+                <i class="fab fa-whatsapp"></i> Avisar pago por WhatsApp
             </a>
 
             <br>
@@ -168,8 +155,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // 1. Recuperar datos de la memoria del navegador
-            // Si no encuentra nada (ej: entraron directo al link), pone valores por defecto
+            // 1. Recuperar datos
             const id = localStorage.getItem('ultimo_pedido_id') || "Pendiente";
             const total = localStorage.getItem('ultimo_pedido_total') || "0";
 
@@ -177,14 +163,12 @@
             document.getElementById('lbl-id').innerText = id;
             document.getElementById('lbl-total').innerText = "$" + parseInt(total).toLocaleString('es-CL');
 
-            // 3. Crear mensaje personalizado para WhatsApp
-            // Mensaje: "Hola Arvinea, acabo de hacer el pedido #ARV-XXXX. ¿Me confirmas?"
-            const wspMsg = `Hola Arvinea, acabo de hacer el pedido ${id}. ¿Me confirmas la recepción?`;
+            // 3. Crear mensaje para WhatsApp
+            const wspMsg = `Hola Arvinea 🌱, acabo de hacer el pedido *${id}* por un total de *$${parseInt(total).toLocaleString('es-CL')}*. Quedo atento a la confirmación.`;
             
-            // Codificar para URL (cambia espacios por %20, etc.)
+            // 4. Generar link
             const wspLink = `https://wa.me/56950323402?text=${encodeURIComponent(wspMsg)}`;
             
-            // Asignar al botón
             document.getElementById('btn-wsp-dynamic').href = wspLink;
         });
     </script>

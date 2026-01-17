@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-<!--EL HEAD ES EL TITULO DE LA VENTANA QUE SE VE EN LA PESTAÑA AQUI SE LINKEA CON EL ARCHIVO DE ESTILO DE LA PAGINA-->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,114 +10,57 @@
 
 <body>
     <header class="header-principal">
-        <!--LOGO-->
-        <div class="logo-container">
-            <img src="img/logo.jpg" alt="Arvinea Logo" class="logo-img">
-        </div>
-        <!--BUSCADOR-->
-        <div class="search-wrapper">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" id="buscador" placeholder="Buscar productos..." onkeyup="filtrarProductos()">
-        </div>
-        <!--CATEGORIAS-->
-        <div class="categoria-wrapper">
-            <button class="btn-categoria" onclick="irASeccion('valle-escondido')">Valle Escondido</button>
-            <button class="btn-categoria" onclick="irASeccion('bruma')">Bruma</button>
-            <button class="btn-categoria gris">Próximamente</button>
+        <div class="nav-bar">
+            <div class="logo-container">
+                <img src="img/logo3.png" alt="Arvinea Logo" class="logo-img">
+                <img src="img/arvineatext.png" alt="Arvinea" class="logo-text-img">
+            </div>
+            
+            <div class="search-wrapper">
+                <input type="text" id="buscador" placeholder="Buscar productos..." onkeyup="filtrarProductos()">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+
+            <div class="cart-icon-container" onclick="toggleCarrito()">
+                <i class="fas fa-shopping-basket"></i>
+                <span id="float-count-header" class="cart-badge">0</span>
+            </div>
         </div>
     </header>
 
-    <main class="contenedor">
-        <!--LINEA VALLE ESCONDIDO-->
-        <h2 id="valle-escondido" class="titulo-seccion">Valle Escondido</h2>
-
-            <!--PRODUCTOS VALLE ESCONDIDO-->
-        <div class="grid-productos" id="lista-productos">
-            <article class="producto">
-                <div class="producto-img" onclick="verFotoGrande('img/solvalle250.png')">
-                    <img src="img/solvalle250.png" alt="Sol del Valle">
-                </div>
-                <div class="producto-info">
-                    <div class="info-top">
-                        <h3>Sol del Valle 250g</h3>
-                        <p class="tipo">Mermelada</p>
-                    </div>
-                    <div class="info-bottom">
-                        <p class="precio">$4.000</p>
-                        <button class="btn-agregar" onclick="abrirDetalle('Sol del Valle 250g', 4000, 'img/solvalle250.png')">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-            </article>
-
-            <article class="producto">
-                <div class="producto-img" onclick="verFotoGrande('img/packsolsombra.png')">
-                    <img src="img/packsolsombra.png" alt="Pack Sol & Sombra">
-                </div>
-                <div class="producto-info">
-                    <div class="info-top">
-                        <h3>Pack Sol & Sombra del Valle</h3>
-                        <p class="tipo">Mermeladas</p>
-                    </div>
-                    <div class="info-bottom">
-                        <p class="precio">$7.000</p>
-                        <button class="btn-agregar" onclick="abrirDetalle('Pack Sol & Sombra', 7000, 'img/packsolsombra.png')">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-            </article>
-
-            <article class="producto">
-                <div class="producto-img" onclick="verFotoGrande('img/sombravalle500.png')">
-                    <img src="img/sombravalle500.png" alt="Sombra del Valle">
-                </div>
-                <div class="producto-info">
-                    <div class="info-top">
-                        <h3>Sombra del Valle 500g</h3>
-                        <p class="tipo">Mermelada</p>
-                    </div>
-                    <div class="info-bottom">
-                        <p class="precio">$7.000</p>
-                        <button class="btn-agregar" onclick="abrirDetalle('Sombra del Valle 500g', 7000, 'img/sombravalle500.png')">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-            </article>
+    <div class="hero-carousel">
+        <div class="slide active" style="background-image: url('img/arvinea1.jpg');">
+            <div class="hero-content">
+                <h1>Sabor Natural, Vida Real</h1>
+                <p>Descubre la pureza del sur en cada frasco.</p>
+                <button onclick="irASeccion('catalogo')">Ver Catálogo</button>
+            </div>
         </div>
-        <!--LINEA BRUMA-->
-        <h2 id="bruma" class="titulo-seccion">Bruma</h2>
-
-            <!--PRODUCTOS BRUMA-->
-        <div class="grid-productos" id="lista-productos">
-            <article class="producto">
-                <div class="producto-img">
-                    <img src="img/proxproducto.png" alt="Próximamente">
-                </div>
-                <div class="producto-info">
-                    <div class="info-top">
-                        <h3></h3>
-                        <p class="tipo"></p>
-                    </div>
-                    <div class="info-bottom">
-                        <p class="precio"></p>
-                    </div>
-                </div>
-            </article>
+        <div class="slide" style="background-image: url('img/arvinea2.jpg');">
+            <div class="hero-content">
+                <h1>Cosecha Artesanal</h1>
+                <p>Del campo a tu mesa, sin escalas.</p>
+            </div>
         </div>
-    </main>
+        
+        <button class="carousel-prev" onclick="moverSlide(-1)">&#10094;</button>
+        <button class="carousel-next" onclick="moverSlide(1)">&#10095;</button>
+    </div>
 
-<!--FOOTER-->
+    <div class="categoria-bar" id="barra-categorias">
+        </div>
+
+    <main class="contenedor" id="catalogo">
+        </main>
+
     <footer class="footer-principal">
         <div class="footer-content">
             <h3>Arvinea Organic</h3>
             <p><i class="fas fa-envelope"></i> arvinea.organic@gmail.com</p>
             <p><i class="fas fa-phone"></i> +56 9 5032 3402</p>
             <div class="redes-sociales">
-                <a href="https://www.instagram.com/arvinea_cl"><i class="fab fa-instagram"></i></a>
-                <a href="#LINKFACE"><i class="fab fa-facebook"></i></a>
+                <a href="https://www.instagram.com/arvinea.cl"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-facebook"></i></a>
                 <a href="https://wa.me/56950323402"><i class="fab fa-whatsapp"></i></a>
             </div>
             <hr>
@@ -127,15 +69,31 @@
     </footer>
 
 
-
-
-<!--CARRITO-->
-
     <div id="btn-flotante-carrito" class="btn-flotante" onclick="toggleCarrito()">
         <div class="burbuja-cantidad" id="float-count">0</div>
         <div class="info-flotante">
             <span id="float-total">$0</span>
             <i class="fas fa-shopping-cart"></i>
+        </div>
+    </div>
+
+    <div id="modal-info-producto" class="modal-overlay" style="display:none;" onclick="if(event.target === this) cerrarModalInfo()">
+        <div class="modal-content info-card">
+            <span class="close-modal" onclick="cerrarModalInfo()">&times;</span>
+            <h3 id="modal-titulo" class="modal-prod-title">Producto</h3>
+            
+            <div class="modal-body-scroll">
+                <p id="modal-desc" class="prod-description">...</p>
+                
+                <div class="nutri-box">
+                    <h4>Información Nutricional</h4>
+                    <table id="tabla-nutricional" class="nutri-table">
+                        <tbody id="modal-nutri-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+            <button class="btn-cerrar-modal" onclick="cerrarModalInfo()">Cerrar</button>
         </div>
     </div>
 
@@ -151,13 +109,10 @@
             <div class="tab" id="tab-pago">Pago</div>
         </div>
 
-
-        <!--VISTA SECCION PEDIDO-->
         <div id="vista-pedido" class="sidebar-body">
             <div id="carrito-items"></div>
         </div>
 
-        <!--VISTA SECCION CHECKOUT-->
         <div id="vista-checkout" class="sidebar-body" style="display:none;">
             <div class="toggle-entrega">
                 <button id="btn-delivery" class="btn-toggle active" onclick="setEntrega('delivery')">
@@ -167,69 +122,61 @@
                     <i class="fas fa-walking"></i> Retiro Gratis
                 </button>
             </div>
-            <!--Info cliente-->
+            
             <div class="form-grupo">
                 <label>Información del cliente</label>
                 <input type="text" id="cliente-nombre" placeholder="Nombre completo">
-                <input type="email" id="cliente-email" placeholder="Correo electrónico (Para enviarte el comprobante)">
+                <input type="email" id="cliente-email" placeholder="Correo electrónico">
                 <input type="text" id="cliente-rut" placeholder="RUT (ej: 12345678-9)" oninput="formatoRut(this)">
                 <input type="tel" id="cliente-telefono" placeholder="Teléfono (9 dígitos)">
-                
             </div>
 
             <div id="contenedor-delivery" class="form-grupo">
-                <label>Dirección de envío</label>
-                <input type="text" id="cliente-direccion" placeholder="Calle, número, comuna...">
-                <p class="nota-input">*El costo de envío se coordina tras el pago.</p>
+                <label>Datos de Envío (BlueExpress)</label>
+                
+                <select id="select-region" onchange="calcularTotalConEnvio()">
+                    <option value="0">Selecciona tu Región...</option>
+                </select>
+                
+                <input type="text" id="cliente-direccion" placeholder="Calle, número, comuna (Ej: Av. Providencia 1234)">
+                
+                <p class="nota-input" id="info-costo-envio" style="color: var(--primary); font-weight: bold;">
+                    El envío se calculará según tu región.
+                </p>
             </div>
 
-            <!--PUNTOS RETIRO PICKUP-->
             <div id="contenedor-retiro" class="form-grupo" style="display:none;">
                 <label>Punto de Retiro</label>
                 <select id="lugar-retiro">
                     <option value="">Selecciona un lugar...</option>
-                    <option value="Metro Bellavista (L5)">Metro Bellavista de la Florida (Línea 5)</option>
-                    <option value="Metro Vicente Valdés (L4,L5)">Metro Vicente Valdés (Línea 4 y 5)</option>
-                    <option value="Metro Baquedano (L1,L5)">Metro Baquedano (Línea 1 y 5)</option>
-                    <option value="Metro Los Heroes (L1,L2)">Metro Los Heroes (Línea 1 y 2)</option>
-                    
+                    <option value="Metro Bellavista (L5)">Metro Bellavista de la Florida</option>
+                    <option value="Metro Vicente Valdés (L4,L5)">Metro Vicente Valdés</option>
+                    <option value="Metro Baquedano (L1,L5)">Metro Baquedano</option>
+                    <option value="Metro Los Heroes (L1,L2)">Metro Los Heroes</option>
                 </select>
                 <p class="nota-input">*Horario exacto a coordinar por WhatsApp.</p>
             </div>
-
         </div>
 
-        <!--VISTA SECCION PAGO Y RESUMEN-->
         <div id="vista-pago" class="sidebar-body" style="display:none;">
-    
             <div style="text-align: center; margin-top: 20px;">
                 <i class="fas fa-clipboard-check" style="font-size: 4rem; color: var(--primary); margin-bottom: 15px;"></i>
                 <h3 style="color: var(--primary);">Resumen del Pedido</h3>
                 <p style="color: #666; padding: 0 20px;">
-                    Estás a un paso de finalizar. Revisa el monto y confirma para recibir los datos de transferencia.
+                    Confirma para recibir los datos de transferencia.
                 </p>
             </div>
 
             <div style="background: white; border: 2px solid #eee; border-radius: 10px; margin: 20px 0; padding: 20px; text-align: center;">
-                <p style="text-align: center; margin:0; font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px;">Total a Pagar</p>
+                <p style="text-align: center; margin:0; font-size: 0.9rem; color: #888; text-transform: uppercase;">Total a Pagar</p>
                 <p class="total-final" style="text-align: center; margin: 5px 0 0 0; font-size: 2.5rem; color: var(--text-main);">
                     <span id="total-final-pago">$0</span>
                 </p>
             </div>
-
-            <div class="sidebar-footer" style="position: relative; padding: 0;">
-                <div id="btns-paso-3" class="btn-group" style="display:none; width: 100%;">
-                    <button class="btn-volver" onclick="volverADatos()">Volver</button>
-                    <button class="btn-pagar" id="btn-enviar-final" onclick="procesarPedidoFinal()">
-                        Confirmar Pedido <i class="fas fa-check"></i>
-                    </button>
-                </div>
-            </div>
             
-            <p style="text-align: center; font-size: 0.8rem; color: #999; margin-top: 15px;">
-                <i class="fas fa-lock"></i> Al confirmar recibirás tu <strong>Código de Pedido</strong> e instrucciones de pago.
+            <p style="text-align: center; font-size: 0.8rem; color: #999;">
+                <i class="fas fa-lock"></i> Pago seguro vía Transferencia Bancaria
             </p>
-
         </div>
 
         <div class="sidebar-footer">
@@ -247,7 +194,7 @@
 
             <div id="btns-paso-3" style="display:none; gap:10px;">
                 <button class="btn-volver" onclick="volverADatos()">Volver</button>
-                <button class="btn-pagar" id="btn-enviar-final" onclick="procesarPedidoFinal()">Enviar Pedido 🚀</button>
+                <button class="btn-pagar" id="btn-enviar-final" onclick="procesarPedidoFinal()">Confirmar Pedido 🚀</button>
             </div>
         </div>
     </div>
@@ -258,29 +205,23 @@
             <span class="close-modal" onclick="cerrarDetalle()">&times;</span>
             <h2 id="det-titulo">Producto</h2>
             <div class="detalle-imagen-wrapper"><img id="det-img" src=""></div>
-            <p class="det-categoria">Mermelada</p>
-            <div class="det-row"><span>Precio base:</span><span id="det-precio" class="precio-morado">$0</span></div>
+            <div class="det-row"><span>Precio:</span><span id="det-precio" class="precio-morado">$0</span></div>
             <div class="det-control">
-                <label>Cantidad:</label>
-                <div class="contador-wrapper">
-                    <button onclick="cambiarCantidad(-1)">-</button>
-                    <span id="det-cantidad">1</span>
-                    <button onclick="cambiarCantidad(1)">+</button>
-                </div>
+                <button onclick="cambiarCantidad(-1)">-</button>
+                <span id="det-cantidad">1</span>
+                <button onclick="cambiarCantidad(1)">+</button>
             </div>
-            <textarea id="det-obs" placeholder="¿Alguna observación?"></textarea>
+            <textarea id="det-obs" placeholder="Observaciones (opcional)"></textarea>
             <div class="det-footer">
-                <div class="det-total-info"><span>Total:</span><strong id="det-total-calc">$0</strong></div>
-                <button class="btn-confirmar-agregar" onclick="confirmarAgregarAlCarrito()">Agregar al pedido</button>
+                <div class="det-total-info"><span>Subtotal:</span><strong id="det-total-calc">$0</strong></div>
+                <button class="btn-confirmar-agregar" onclick="confirmarAgregarAlCarrito()">Agregar</button>
             </div>
         </div>
     </div>
 
-    <div id="lightbox" class="lightbox" onclick="cerrarFotoGrande()"><img id="lightbox-img" src=""></div>
     <div id="btn-subir" onclick="window.scrollTo(0,0)"><i class="fas fa-arrow-up"></i></div>
 
     <form id="form-real" action="https://formsubmit.co/arvinea.organic@gmail.com" method="POST" style="display:none;">
-        
         <input type="hidden" name="_captcha" value="false">
         <input type="hidden" name="_template" value="table">
         <input type="hidden" name="_subject" value="Nuevo Pedido Web!">
@@ -293,9 +234,8 @@
         <input type="hidden" name="Resumen_Pedido" id="real-pedido">
         <input type="hidden" name="Total_Pagar" id="real-total">
         <input type="hidden" name="Gestionar_Pedido" id="real-link-gestion">
-
     </form>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>
