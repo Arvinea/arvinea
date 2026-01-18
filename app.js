@@ -7,7 +7,7 @@ let tarifasEnvio = []; // Guardará la lista de precios
 let costoEnvioSeleccionado = 0; // Guardará el costo actual (0, 4000, 7500...)
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbwk6hIQqOEMs68_YPwucQs9D51_iiHkCmz4g4q7JgaDXcO2lPddPke6bRF-eKZNbWWClQ/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbyJd7f8KMSXtId9AuHjQW-gfp-9NzDyHE2XHuD1pKGuy4_IAd2wPxg-uysQ7D5sF0fUCA/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -174,8 +174,14 @@ function filtrarSeccion(idObjetivo, btnClick) {
 // --- 2. CREAR TARJETA HTML ---
 function crearTarjetaProducto(p, contenedor) {
     const div = document.createElement('div');
-    div.classList.add('product-card'); // Clase correcta para el CSS nuevo
+    div.classList.add('product-card');
     
+    // --- MEJORA BUSCADOR: Guardamos todo el texto buscable aquí ---
+    // Unimos Nombre + Categoría + Descripción en una sola frase oculta
+    const textoBuscable = `${p.nombre} ${p.categoria} ${p.descripcion}`;
+    div.setAttribute('data-busqueda', textoBuscable); 
+    // -------------------------------------------------------------
+
     let botonHTML = '';
     if (p.stock > 0) {
         botonHTML = `<button class="btn-agregar" onclick="prepararCompra('${p.nombre}')">
@@ -278,23 +284,27 @@ function confirmarAgregarAlCarrito() {
 function filtrarProductos(filtroTexto) {
     const input = document.getElementById('buscador');
     
-    // Si viene texto del botón, lo ponemos en el input
+    // Si viene texto desde un botón (ej: Categoría), lo ponemos en el input
     if (typeof filtroTexto === 'string') {
         input.value = filtroTexto;
     }
 
-    const filtro = input.value.toUpperCase().trim();
-    
-    // CORRECCIÓN: Buscamos '.product-card', no '.producto'
+    const termino = input.value.toUpperCase().trim();
     const items = document.getElementsByClassName('product-card'); 
     
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        const tituloTag = item.querySelector('h3');
-        if (tituloTag) {
-            const textoTitulo = tituloTag.innerText || tituloTag.textContent;
-            // Mostrar si coincide con la búsqueda
-            item.style.display = (textoTitulo.toUpperCase().indexOf(filtro) > -1) ? "" : "none";
+        
+        // RECUPERAMOS EL TEXTO OCULTO QUE CREAMOS ANTES
+        // Si por alguna razón no tiene el atributo (productos viejos), usamos un string vacío para no dar error
+        const dataBusqueda = (item.getAttribute('data-busqueda') || '').toUpperCase();
+
+        // Si el término está en CUALQUIER parte de esa data (nombre, desc o cat)
+        if (dataBusqueda.indexOf(termino) > -1) {
+            item.style.display = "";
+            item.style.animation = "fadeIn 0.5s"; // Efecto visual suave
+        } else {
+            item.style.display = "none";
         }
     }
 }
@@ -405,7 +415,9 @@ function irAPago() {
     // Si es retiro, el envío es 0. Si es delivery, usamos el seleccionado.
     const envioFinal = (tipoEntrega === 'delivery') ? costoEnvioSeleccionado : 0;
     const granTotal = subtotal + envioFinal;
-
+    document.getElementById('resumen-subtotal').innerText = '$' + subtotal.toLocaleString('es-CL');
+    document.getElementById('resumen-envio').innerText = '$' + envioFinal.toLocaleString('es-CL');
+    document.getElementById('total-final-pago').innerText = '$' + granTotal.toLocaleString('es-CL');
     // Mostrar en el resumen (Paso 3)
     document.getElementById('total-final-pago').innerText = '$' + granTotal.toLocaleString('es-CL');
 
