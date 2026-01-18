@@ -7,7 +7,7 @@ let tarifasEnvio = []; // Guardará la lista de precios
 let costoEnvioSeleccionado = 0; // Guardará el costo actual (0, 4000, 7500...)
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbyJd7f8KMSXtId9AuHjQW-gfp-9NzDyHE2XHuD1pKGuy4_IAd2wPxg-uysQ7D5sF0fUCA/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbw-5mkT1ERyv40a0dQJIWDl_lQKBqXiz6HwAV5Q7io6_bueuW176J5ejqMiKJyqymV0aA/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
