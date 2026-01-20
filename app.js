@@ -417,10 +417,9 @@ function irAPago() {
     let textoEnvio = '$' + costoEnvioFinal.toLocaleString('es-CL');
 
     // VERIFICAR PROMOCIÓN ENVÍO GRATIS
-    // Si existe la regla en Excel Y el subtotal la supera
     if (configGlobal.EnvioGratis && subtotal >= parseInt(configGlobal.EnvioGratis)) {
         if (tipoEntrega === 'delivery') {
-            descuentoEnvio = costoEnvioFinal; // Descontamos todo el envío
+            descuentoEnvio = costoEnvioFinal;
             costoEnvioFinal = 0;
             textoEnvio = `<span style="text-decoration:line-through; color:#999; font-size:0.8em;">$${descuentoEnvio.toLocaleString('es-CL')}</span> <span style="color:#27ae60; font-weight:bold;">GRATIS</span>`;
         }
@@ -453,12 +452,11 @@ function irAPago() {
     const divResumen = document.getElementById('area-resumen-pago');
     if (divResumen) {
         divResumen.innerHTML = resumenHTML;
-    } else {
-        console.error("Falta el div 'area-resumen-pago' en index.html");
     }
 
-    // Actualizamos total global y cambiamos pestaña
-    document.getElementById('total-final-pago').innerText = '$' + granTotal.toLocaleString('es-CL'); 
+    // --- CORRECCIÓN: ELIMINAMOS LA LÍNEA QUE CAUSABA EL ERROR ---
+    // document.getElementById('total-final-pago').innerText = ... (BORRADA)
+
     cambiarPestaña('tab-pago', 'vista-pago', 'btns-paso-3');
     document.getElementById('footer-total-row').style.display = 'none'; 
 }
