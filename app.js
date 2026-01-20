@@ -394,21 +394,23 @@ function irADatos() {
 }
 
 function irAPago() {
+    // 1. Capturamos los datos
     const nombre = document.getElementById('cliente-nombre').value;
     const fono = document.getElementById('cliente-telefono').value;
     const email = document.getElementById('cliente-email').value;
 
-    // Validaciones
+    // 2. Validaciones básicas
     if(!nombre || !validarTelefono(fono) || !validarEmail(email)) {
         alert("Por favor revisa tus datos."); return;
     }
 
-    // Validación de Envío
+    // 3. Validación de Envío (Solo si es Delivery)
     if (tipoEntrega === 'delivery' && costoEnvioSeleccionado === 0) {
         alert("Por favor selecciona tu Región para el envío.");
         return;
     }
 
+    // 4. Cálculos Matemáticos
     let subtotal = 0;
     carrito.forEach(i => subtotal += (i.precioBase * i.cantidad));
 
@@ -416,7 +418,7 @@ function irAPago() {
     let descuentoEnvio = 0;
     let textoEnvio = '$' + costoEnvioFinal.toLocaleString('es-CL');
 
-    // VERIFICAR PROMOCIÓN ENVÍO GRATIS
+    // 5. Lógica de Promoción (Envío Gratis)
     if (configGlobal.EnvioGratis && subtotal >= parseInt(configGlobal.EnvioGratis)) {
         if (tipoEntrega === 'delivery') {
             descuentoEnvio = costoEnvioFinal;
@@ -427,7 +429,7 @@ function irAPago() {
 
     const granTotal = subtotal + costoEnvioFinal;
 
-    // --- RENDERIZADO VISUAL MEJORADO ---
+    // 6. Generamos el HTML del Resumen
     const resumenHTML = `
         <div class="resumen-container">
             <div class="resumen-fila">
@@ -448,17 +450,19 @@ function irAPago() {
         </div>
     `;
 
-    // Inyección en el HTML
+    // 7. Inyectamos el HTML (Con protección anti-errores)
     const divResumen = document.getElementById('area-resumen-pago');
     if (divResumen) {
         divResumen.innerHTML = resumenHTML;
+    } else {
+        console.error("Error: No encontré el div 'area-resumen-pago' en el HTML.");
     }
 
-    // --- CORRECCIÓN: ELIMINAMOS LA LÍNEA QUE CAUSABA EL ERROR ---
-    // document.getElementById('total-final-pago').innerText = ... (BORRADA)
+    // 8. Ocultamos el footer flotante antiguo y avanzamos
+    const footerRow = document.getElementById('footer-total-row');
+    if(footerRow) footerRow.style.display = 'none';
 
     cambiarPestaña('tab-pago', 'vista-pago', 'btns-paso-3');
-    document.getElementById('footer-total-row').style.display = 'none'; 
 }
 
 function volverAPedido() { cambiarPestaña('tab-pedido', 'vista-pedido', 'btn-paso-1'); document.getElementById('footer-total-row').style.display = 'flex'; }
