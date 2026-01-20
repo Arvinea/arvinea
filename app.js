@@ -8,7 +8,7 @@ let configGlobal = {}; // Aquí guardaremos lo que diga el Excel
 let costoEnvioSeleccionado = 0; // Guardará el costo actual (0, 4000, 7500...)
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbyr0nmoOtcIhrcbqfkG3TeZYAejhzAOei0HKcqk7Wy_tekIm63xLfy35dPAvXxsSDFHYQ/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbzieyjMfWHKNt75CGeS1FZZUiz816eJV0TEt4G60BIwHWftZ2vbuwo3CAfw6nDyaCmi7w/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
