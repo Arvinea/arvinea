@@ -6,9 +6,12 @@ let inventarioGlobal = [];
 let tarifasEnvio = []; // Guardará la lista de precios
 let configGlobal = {}; // Aquí guardaremos lo que diga el Excel
 let costoEnvioSeleccionado = 0; // Guardará el costo actual (0, 4000, 7500...)
+let listaCupones = []; // Aquí se guardarán los cupones válidos
+let descuentoCupón = 0; // El monto ($) que descontaremos
+let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbzieyjMfWHKNt75CGeS1FZZUiz816eJV0TEt4G60BIwHWftZ2vbuwo3CAfw6nDyaCmi7w/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycby5apEskj7w7j2GnXyLobjJrU0gPOsVzXv1M4H47q5K_qZA0yFd-CpaevKXiaswiqcn-w/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -407,23 +410,19 @@ function irADatos() {
 }
 
 function irAPago() {
-    // 1. Capturamos los datos
+    // 1. Datos y Validaciones
     const nombre = document.getElementById('cliente-nombre').value;
     const fono = document.getElementById('cliente-telefono').value;
     const email = document.getElementById('cliente-email').value;
 
-    // 2. Validaciones básicas
     if(!nombre || !validarTelefono(fono) || !validarEmail(email)) {
         alert("Por favor revisa tus datos."); return;
     }
-
-    // 3. Validación de Envío (Solo si es Delivery)
     if (tipoEntrega === 'delivery' && costoEnvioSeleccionado === 0) {
-        alert("Por favor selecciona tu Región para el envío.");
-        return;
+        alert("Por favor selecciona tu Región para el envío."); return;
     }
 
-    // 4. Cálculos Matemáticos
+    // 2. Cálculos Base
     let subtotal = 0;
     carrito.forEach(i => subtotal += (i.precioBase * i.cantidad));
 
@@ -431,7 +430,7 @@ function irAPago() {
     let descuentoEnvio = 0;
     let textoEnvio = '$' + costoEnvioFinal.toLocaleString('es-CL');
 
-    // 5. Lógica de Promoción (Envío Gratis)
+    // 3. Lógica Envío Gratis
     if (configGlobal.EnvioGratis && subtotal >= parseInt(configGlobal.EnvioGratis)) {
         if (tipoEntrega === 'delivery') {
             descuentoEnvio = costoEnvioFinal;
@@ -440,21 +439,44 @@ function irAPago() {
         }
     }
 
-    const granTotal = subtotal + costoEnvioFinal;
+    // 4. Calcular Total ANTES del cupón para validaciones
+    // (Opcional: podrías poner reglas como "Cupón no aplica si el total es bajo")
 
-    // 6. Generamos el HTML del Resumen
+    // 5. Total Final
+    // Gran Total = Subtotal - DescuentoCupón + Envío (que puede ser 0)
+    let granTotal = subtotal - descuentoCupón + costoEnvioFinal;
+    if (granTotal < 0) granTotal = 0; // Evitar totales negativos
+
+    // 6. Generar HTML
     const resumenHTML = `
         <div class="resumen-container">
             <div class="resumen-fila">
                 <span>Subtotal Productos:</span>
                 <span>$${subtotal.toLocaleString('es-CL')}</span>
             </div>
+
+            <div style="margin: 15px 0; padding: 10px; background: #fff; border: 1px dashed #ccc; border-radius: 5px;">
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="input-cupon" placeholder="Código de descuento" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" value="${codigoAplicado}">
+                    <button onclick="aplicarCupon()" style="background:var(--primary); color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">Aplicar</button>
+                </div>
+                <p id="msg-cupon" style="font-size:0.8rem; margin-top:5px; min-height:1.2em;">
+                    ${codigoAplicado ? `<span style="color:#27ae60">Cupón ${codigoAplicado} aplicado.</span>` : ''}
+                </p>
+            </div>
+
+            ${descuentoCupón > 0 ? `
+            <div class="resumen-fila destacado" style="color:#e74c3c; background:#fdedec;">
+                <span>Descuento Cupón:</span>
+                <span>-$${descuentoCupón.toLocaleString('es-CL')}</span>
+            </div>` : ''}
+
             <div class="resumen-fila ${descuentoEnvio > 0 ? 'destacado' : ''}">
                 <span>Envío (${tipoEntrega === 'delivery' ? 'Domicilio' : 'Retiro'}):</span>
                 <span>${textoEnvio}</span>
             </div>
             
-            ${descuentoEnvio > 0 ? `<div style="text-align:center; font-size:0.85rem; color:#27ae60; margin-bottom:10px;">¡Felicidades! Tienes envío gratis 🎉</div>` : ''}
+            ${descuentoEnvio > 0 ? `<div style="text-align:center; font-size:0.85rem; color:#27ae60; margin-bottom:10px;">¡Envío gratis aplicado! 🚚</div>` : ''}
 
             <div style="text-align:center;">
                 <span style="color:#888; text-transform:uppercase; font-size:0.9rem;">Total a Pagar</span>
@@ -463,15 +485,11 @@ function irAPago() {
         </div>
     `;
 
-    // 7. Inyectamos el HTML (Con protección anti-errores)
+    // 7. Inyectar
     const divResumen = document.getElementById('area-resumen-pago');
-    if (divResumen) {
-        divResumen.innerHTML = resumenHTML;
-    } else {
-        console.error("Error: No encontré el div 'area-resumen-pago' en el HTML.");
-    }
+    if (divResumen) divResumen.innerHTML = resumenHTML;
 
-    // 8. Ocultamos el footer flotante antiguo y avanzamos
+    // 8. Ocultar footer y mostrar pestaña
     const footerRow = document.getElementById('footer-total-row');
     if(footerRow) footerRow.style.display = 'none';
 
@@ -612,7 +630,40 @@ function mostrarSlide(n) {
 function moverSlide(n) { mostrarSlide(slideIndex += n); }
 setInterval(() => { moverSlide(1); }, 5000);
 
+function aplicarCupon() {
+    const input = document.getElementById('input-cupon');
+    const mensaje = document.getElementById('msg-cupon');
+    const codigoUser = input.value.toUpperCase().trim();
+    
+    // Buscamos si existe
+    const cuponEncontrado = listaCupones.find(c => c.codigo === codigoUser);
 
+    if (cuponEncontrado) {
+        codigoAplicado = cuponEncontrado.codigo;
+        
+        // Calculamos el descuento basado en el subtotal actual
+        let subtotal = 0;
+        carrito.forEach(i => subtotal += (i.precioBase * i.cantidad));
+
+        if (cuponEncontrado.tipo === 'PORCENTAJE') {
+            descuentoCupón = Math.round(subtotal * (cuponEncontrado.valor / 100));
+        } else {
+            descuentoCupón = cuponEncontrado.valor;
+        }
+
+        mensaje.style.color = "#27ae60";
+        mensaje.innerText = `¡Cupón ${codigoUser} aplicado! Ahorras $${descuentoCupón.toLocaleString('es-CL')}`;
+        
+        // Recargamos la vista de pago para que se actualicen los números
+        irAPago(); 
+    } else {
+        descuentoCupón = 0;
+        codigoAplicado = "";
+        mensaje.style.color = "red";
+        mensaje.innerText = "Cupón inválido o expirado.";
+        irAPago(); // Recargamos para borrar cualquier descuento previo
+    }
+}
 
 async function cargarConfiguracion() {
     try {
@@ -633,4 +684,12 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarProductos();
     cargarTarifas();
     cargarConfiguracion();
+    cargarCupones();
 });
+
+async function cargarCupones() {
+    try {
+        const response = await fetch(`${SHEET_API}?action=obtenerCupones`);
+        listaCupones = await response.json();
+    } catch (e) { console.error("Error cupones:", e); }
+}
