@@ -177,11 +177,9 @@ function crearTarjetaProducto(p, contenedor) {
     const div = document.createElement('div');
     div.classList.add('product-card');
     
-    // --- MEJORA BUSCADOR: Guardamos todo el texto buscable aquí ---
-    // Unimos Nombre + Categoría + Descripción en una sola frase oculta
+    // Texto oculto para el buscador
     const textoBuscable = `${p.nombre} ${p.categoria} ${p.descripcion}`;
     div.setAttribute('data-busqueda', textoBuscable); 
-    // -------------------------------------------------------------
 
     let botonHTML = '';
     if (p.stock > 0) {
@@ -196,13 +194,28 @@ function crearTarjetaProducto(p, contenedor) {
     const descSafe = p.descripcion ? p.descripcion.replace(/'/g, "\\'") : '';
     const nutriSafe = p.nutricion ? p.nutricion.replace(/'/g, "\\'") : '';
 
+    // --- LÓGICA DE PRECIO OFERTA ---
+    let htmlPrecio = `<p class="price">$${p.precio.toLocaleString('es-CL')}</p>`;
+    
+    // Si existe precioAntes y es mayor al precio actual, mostramos la oferta
+    if (p.precioAntes && p.precioAntes > p.precio) {
+        htmlPrecio = `
+            <div class="precio-oferta-container">
+                <span class="precio-tachado">$${p.precioAntes.toLocaleString('es-CL')}</span>
+                <span class="price oferta">$${p.precio.toLocaleString('es-CL')}</span>
+            </div>
+            <div class="etiqueta-oferta">OFERTA</div>
+        `;
+    }
+
     div.innerHTML = `
         <div class="product-image" onclick="abrirModalInfo('${nombreSafe}', '${descSafe}', '${nutriSafe}')">
             <img src="${p.imagen}" alt="${p.nombre}">
+            ${(p.precioAntes && p.precioAntes > p.precio) ? '<span class="badge-sale">%</span>' : ''}
         </div>
         <div class="product-info">
             <h3>${p.nombre}</h3>
-            <p class="price">$${p.precio.toLocaleString('es-CL')}</p>
+            ${htmlPrecio}
             <div style="display:flex; gap:10px; flex-direction:column;">
                 ${botonHTML}
                 <button class="btn-info-nutri" onclick="abrirModalInfo('${nombreSafe}', '${descSafe}', '${nutriSafe}')">
