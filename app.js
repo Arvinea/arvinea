@@ -4,10 +4,11 @@ let productoTemporal = {};
 let tipoEntrega = 'delivery'; 
 let inventarioGlobal = []; 
 let tarifasEnvio = []; // Guardará la lista de precios
+let configGlobal = {}; // Aquí guardaremos lo que diga el Excel
 let costoEnvioSeleccionado = 0; // Guardará el costo actual (0, 4000, 7500...)
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbw-5mkT1ERyv40a0dQJIWDl_lQKBqXiz6HwAV5Q7io6_bueuW176J5ejqMiKJyqymV0aA/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbyr0nmoOtcIhrcbqfkG3TeZYAejhzAOei0HKcqk7Wy_tekIm63xLfy35dPAvXxsSDFHYQ/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -408,22 +409,56 @@ function irAPago() {
         return;
     }
 
-    // CALCULO TOTAL FINAL
     let subtotal = 0;
     carrito.forEach(i => subtotal += (i.precioBase * i.cantidad));
 
-    // Si es retiro, el envío es 0. Si es delivery, usamos el seleccionado.
-    const envioFinal = (tipoEntrega === 'delivery') ? costoEnvioSeleccionado : 0;
-    const granTotal = subtotal + envioFinal;
-    document.getElementById('resumen-subtotal').innerText = '$' + subtotal.toLocaleString('es-CL');
-    document.getElementById('resumen-envio').innerText = '$' + envioFinal.toLocaleString('es-CL');
-    document.getElementById('total-final-pago').innerText = '$' + granTotal.toLocaleString('es-CL');
-    // Mostrar en el resumen (Paso 3)
-    document.getElementById('total-final-pago').innerText = '$' + granTotal.toLocaleString('es-CL');
+    let costoEnvioFinal = (tipoEntrega === 'delivery') ? costoEnvioSeleccionado : 0;
+    let descuentoEnvio = 0;
+    let textoEnvio = '$' + costoEnvioFinal.toLocaleString('es-CL');
 
-    // (Opcional) Mostrar desglose
-    // Puedes crear un elemento <p id="desglose-pago"></p> en el HTML si quieres mostrar "Subtotal + Envío"
+    // VERIFICAR PROMOCIÓN ENVÍO GRATIS
+    // Si existe la regla en Excel Y el subtotal la supera
+    if (configGlobal.EnvioGratis && subtotal >= parseInt(configGlobal.EnvioGratis)) {
+        if (tipoEntrega === 'delivery') {
+            descuentoEnvio = costoEnvioFinal; // Descontamos todo el envío
+            costoEnvioFinal = 0;
+            textoEnvio = `<span style="text-decoration:line-through; color:#999; font-size:0.8em;">$${descuentoEnvio.toLocaleString('es-CL')}</span> <span style="color:#27ae60; font-weight:bold;">GRATIS</span>`;
+        }
+    }
 
+    const granTotal = subtotal + costoEnvioFinal;
+
+    // --- RENDERIZADO VISUAL MEJORADO ---
+    const resumenHTML = `
+        <div class="resumen-container">
+            <div class="resumen-fila">
+                <span>Subtotal Productos:</span>
+                <span>$${subtotal.toLocaleString('es-CL')}</span>
+            </div>
+            <div class="resumen-fila ${descuentoEnvio > 0 ? 'destacado' : ''}">
+                <span>Envío (${tipoEntrega === 'delivery' ? 'Domicilio' : 'Retiro'}):</span>
+                <span>${textoEnvio}</span>
+            </div>
+            
+            ${descuentoEnvio > 0 ? `<div style="text-align:center; font-size:0.85rem; color:#27ae60; margin-bottom:10px;">¡Felicidades! Tienes envío gratis 🎉</div>` : ''}
+
+            <div style="text-align:center;">
+                <span style="color:#888; text-transform:uppercase; font-size:0.9rem;">Total a Pagar</span>
+                <div class="total-gigante">$${granTotal.toLocaleString('es-CL')}</div>
+            </div>
+        </div>
+    `;
+
+    // Inyección en el HTML
+    const divResumen = document.getElementById('area-resumen-pago');
+    if (divResumen) {
+        divResumen.innerHTML = resumenHTML;
+    } else {
+        console.error("Falta el div 'area-resumen-pago' en index.html");
+    }
+
+    // Actualizamos total global y cambiamos pestaña
+    document.getElementById('total-final-pago').innerText = '$' + granTotal.toLocaleString('es-CL'); 
     cambiarPestaña('tab-pago', 'vista-pago', 'btns-paso-3');
     document.getElementById('footer-total-row').style.display = 'none'; 
 }
@@ -562,8 +597,25 @@ function mostrarSlide(n) {
 function moverSlide(n) { mostrarSlide(slideIndex += n); }
 setInterval(() => { moverSlide(1); }, 5000);
 
+
+
+async function cargarConfiguracion() {
+    try {
+        const response = await fetch(`${SHEET_API}?action=obtenerConfig`);
+        configGlobal = await response.json();
+
+        // Si hay mensaje de barra activo, lo mostramos
+        if (configGlobal.MensajeBarra) {
+            const barra = document.getElementById('promo-bar');
+            document.getElementById('promo-texto').innerText = configGlobal.MensajeBarra;
+            barra.style.display = 'block';
+        }
+    } catch (e) { console.error("Error config:", e); }
+}
+
 // INICIALIZAR
 document.addEventListener("DOMContentLoaded", () => {
     cargarProductos();
     cargarTarifas();
+    cargarConfiguracion();
 });

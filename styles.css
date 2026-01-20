@@ -392,3 +392,49 @@ body {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- BARRA PROMOCIONAL --- */
+.promo-bar {
+    background-color: var(--accent); /* Color Dorado */
+    color: white;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    position: relative;
+    z-index: 1001; /* Encima del header */
+    animation: slideDown 0.5s ease;
+}
+@keyframes slideDown { from {transform: translateY(-100%);} to {transform: translateY(0);} }
+
+/* --- MEJORA RESUMEN PEDIDO --- */
+.resumen-container {
+    background: #fdfbf7; /* Beige muy suave */
+    border: 1px solid #e1e1e1;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.resumen-fila {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+    color: #555;
+}
+.resumen-fila.destacado {
+    color: var(--primary);
+    font-weight: bold;
+    background: #e8f5e9;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin: 10px -10px; /* Para que se expanda un poco */
+}
+.total-gigante {
+    font-size: 2.8rem;
+    color: var(--text-main);
+    font-weight: 800;
+    margin-top: 10px;
+    border-top: 2px dashed #ccc;
+    padding-top: 15px;
+}

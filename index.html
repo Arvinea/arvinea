@@ -10,6 +10,9 @@
 </head>
 
 <body>
+    <div id="promo-bar" class="promo-bar" style="display:none;">
+        <p id="promo-texto">Cargando ofertas...</p>
+    </div>
     <header class="header-principal">
         <div class="nav-bar">
             <div class="logo-container">
@@ -161,16 +164,6 @@
         </div>
 
         <div id="vista-pago" class="sidebar-body" style="display:none;">
-            <div style="text-align: left; margin-bottom: 10px; padding: 0 20px; font-size: 0.95rem; color: #666;">
-                <div style="display:flex; justify-content:space-between;">
-                    <span>Subtotal Productos:</span>
-                    <span id="resumen-subtotal">$0</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-top:5px;">
-                    <span>Costo Envío:</span>
-                    <span id="resumen-envio">$0</span>
-                </div>
-            </div>
             <div style="text-align: center; margin-top: 20px;">
                 <i class="fas fa-clipboard-check" style="font-size: 4rem; color: var(--primary); margin-bottom: 15px;"></i>
                 <h3 style="color: var(--primary);">Resumen del Pedido</h3>
@@ -179,14 +172,9 @@
                 </p>
             </div>
 
-            <div style="background: white; border: 2px solid #eee; border-radius: 10px; margin: 20px 0; padding: 20px; text-align: center;">
-                <p style="text-align: center; margin:0; font-size: 0.9rem; color: #888; text-transform: uppercase;">Total a Pagar</p>
-                <p class="total-final" style="text-align: center; margin: 5px 0 0 0; font-size: 2.5rem; color: var(--text-main);">
-                    <span id="total-final-pago">$0</span>
-                </p>
-            </div>
+            <div id="area-resumen-pago"></div> 
             
-            <p style="text-align: center; font-size: 0.8rem; color: #999;">
+            <p style="text-align: center; font-size: 0.8rem; color: #999; margin-top:20px;">
                 <i class="fas fa-lock"></i> Pago seguro vía Transferencia Bancaria
             </p>
         </div>
