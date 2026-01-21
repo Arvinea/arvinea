@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbxdyJmlLMUoJpoy3HzKRokzWpGts4CYq6fJdslUrCc5cxCzdMopmHdF1jFsGisgRP00gQ/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbyPdxulA8tbZ5s4bCzHOeKwkkmUbZkERAb7pMEgdUlsl32BWmG-UoPF4QvCo1TB7EJK0g/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -213,6 +213,15 @@ function crearTarjetaProducto(p, contenedor) {
             </div>
             <div class="etiqueta-oferta">OFERTA</div>
         `;
+    }
+
+    let badgeHTML = '';
+    
+    // Prioridad: Si es 2x1 gana sobre el % de descuento normal
+    if (p.promo === '2X1' || p.promo === '3X2') {
+        badgeHTML = `<span class="badge-sale promo-special">${p.promo}</span>`;
+    } else if (p.precioAntes && p.precioAntes > p.precio) {
+        badgeHTML = '<span class="badge-sale">%</span>';
     }
 
     div.innerHTML = `
@@ -474,16 +483,44 @@ function irAPago() {
         alert("Por favor selecciona tu Región para el envío."); return;
     }
 
-    // 2. Cálculos Base
-    let subtotal = 0;
-    carrito.forEach(i => subtotal += (i.precioBase * i.cantidad));
+    // 2. Cálculos Base (Subtotal y Promos Automáticas 2x1 / 3x2)
+    let subtotal = 0; // Suma de todos los precios full
+    let totalDescuentoPromos = 0; // Ahorro por 2x1 o 3x2
 
+    carrito.forEach(i => {
+        // Sumamos el precio normal al subtotal general
+        subtotal += (i.precioBase * i.cantidad);
+
+        // Buscamos el producto original en inventario para ver si tiene promo activa
+        // (Usamos inventarioGlobal porque el carrito quizás no guardó el dato 'promo')
+        const prodData = inventarioGlobal.find(p => p.nombre === i.nombre);
+        const promo = prodData ? prodData.promo : ""; 
+        
+        let gratis = 0;
+
+        if (promo === '2X1') {
+            // Cada 2 unidades, 1 es gratis
+            gratis = Math.floor(i.cantidad / 2);
+        } else if (promo === '3X2') {
+            // Cada 3 unidades, 1 es gratis
+            gratis = Math.floor(i.cantidad / 3);
+        }
+
+        // Si corresponde algo gratis, sumamos ese valor al descuento
+        if (gratis > 0) {
+            totalDescuentoPromos += (gratis * i.precioBase);
+        }
+    });
+
+    // Calculamos el monto real que pagaría el cliente antes de cupones y envío
+    let montoTrasPromos = subtotal - totalDescuentoPromos;
+
+    // 3. Lógica Envío Gratis (Validamos sobre el monto REAL, tras promos)
     let costoEnvioFinal = (tipoEntrega === 'delivery') ? costoEnvioSeleccionado : 0;
     let descuentoEnvio = 0;
     let textoEnvio = '$' + costoEnvioFinal.toLocaleString('es-CL');
 
-    // 3. Lógica Envío Gratis
-    if (configGlobal.EnvioGratis && subtotal >= parseInt(configGlobal.EnvioGratis)) {
+    if (configGlobal.EnvioGratis && montoTrasPromos >= parseInt(configGlobal.EnvioGratis)) {
         if (tipoEntrega === 'delivery') {
             descuentoEnvio = costoEnvioFinal;
             costoEnvioFinal = 0;
@@ -491,21 +528,34 @@ function irAPago() {
         }
     }
 
-    // 4. Calcular Total ANTES del cupón para validaciones
-    // (Opcional: podrías poner reglas como "Cupón no aplica si el total es bajo")
+    // 4. Recalcular Cupón (Si es porcentaje, debe aplicarse al nuevo monto)
+    if (codigoAplicado && listaCupones.length > 0) {
+         const cuponData = listaCupones.find(c => c.codigo === codigoAplicado);
+         // Si el cupón es porcentaje, recalculamos para ser exactos con el nuevo subtotal
+         if (cuponData && cuponData.tipo === 'PORCENTAJE') {
+             descuentoCupón = Math.round(montoTrasPromos * (cuponData.valor / 100));
+         }
+         // Si es MONTO fijo, se mantiene el valor que ya tenía
+    }
 
     // 5. Total Final
-    // Gran Total = Subtotal - DescuentoCupón + Envío (que puede ser 0)
-    let granTotal = subtotal - descuentoCupón + costoEnvioFinal;
-    if (granTotal < 0) granTotal = 0; // Evitar totales negativos
+    // Gran Total = (Subtotal - Promos) - Cupón + Envío
+    let granTotal = montoTrasPromos - descuentoCupón + costoEnvioFinal;
+    if (granTotal < 0) granTotal = 0; // Seguridad para no dar negativos
 
-    // 6. Generar HTML
+    // 6. Generar HTML del Resumen
     const resumenHTML = `
         <div class="resumen-container">
             <div class="resumen-fila">
                 <span>Subtotal Productos:</span>
                 <span>$${subtotal.toLocaleString('es-CL')}</span>
             </div>
+
+            ${totalDescuentoPromos > 0 ? `
+            <div class="resumen-fila destacado" style="color:#8e44ad; background:#f4ecf7;">
+                <span>Ahorro Promo (2x1/3x2):</span>
+                <span>-$${totalDescuentoPromos.toLocaleString('es-CL')}</span>
+            </div>` : ''}
 
             <div style="margin: 15px 0; padding: 10px; background: #fff; border: 1px dashed #ccc; border-radius: 5px;">
                 <div style="display:flex; gap:5px;">
@@ -537,11 +587,11 @@ function irAPago() {
         </div>
     `;
 
-    // 7. Inyectar
+    // 7. Inyectar en el HTML
     const divResumen = document.getElementById('area-resumen-pago');
     if (divResumen) divResumen.innerHTML = resumenHTML;
 
-    // 8. Ocultar footer y mostrar pestaña
+    // 8. Ocultar footer antiguo y mostrar pestaña
     const footerRow = document.getElementById('footer-total-row');
     if(footerRow) footerRow.style.display = 'none';
 

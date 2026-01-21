@@ -472,3 +472,9 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 10;
 }
+
+.badge-sale.promo-special {
+    background: #8e44ad; /* Un morado o color distinto para diferenciar del rojo oferta */
+    font-size: 1rem;
+    padding: 8px 12px;
+}
