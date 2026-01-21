@@ -236,36 +236,37 @@ function crearTarjetaProducto(p, contenedor) {
 
 // --- 3. LÓGICA DE COMPRA ---
 function prepararCompra(nombreProducto) {
-    // Buscamos el producto en el inventario global
+    // 1. Buscamos el producto
     productoTemporal = inventarioGlobal.find(p => p.nombre === nombreProducto);
     if (!productoTemporal) return;
 
-    // --- CÁLCULO DEL DISPONIBLE REAL ---
-    // Si hay 10, disponible es 9.
-    const disponibleParaCliente = productoTemporal.stock - STOCK_SEGURIDAD;
+    // 2. Calculamos el disponible REAL (Stock - Seguridad)
+    // Si tienes 7 en Excel y seguridad 1, el cliente puede llevar máximo 6.
+    let disponibleParaCliente = productoTemporal.stock - STOCK_SEGURIDAD;
 
+    // Validación extra por si acaso
     if (disponibleParaCliente <= 0) {
-        alert("Lo sentimos, este producto acaba de agotarse.");
+        alert("Producto Agotado");
         return;
     }
 
-    // Llenamos el modal
+    // 3. Llenamos los datos visuales
     document.getElementById('det-img').src = productoTemporal.imagen;
     document.getElementById('det-nombre').innerText = productoTemporal.nombre;
     document.getElementById('det-precio').innerText = '$' + productoTemporal.precio.toLocaleString('es-CL');
     document.getElementById('det-desc').innerText = productoTemporal.descripcion;
-    
-    // Configuramos el input de cantidad
-    const inputCant = document.getElementById('det-cantidad');
-    inputCant.value = 1;
-    inputCant.max = disponibleParaCliente; // <--- TOPE MÁXIMO
-    
-    // (Opcional) Mostrar el stock disponible al cliente
-    // document.getElementById('msg-stock-modal').innerText = `Disponibles: ${disponibleParaCliente}`;
 
+    // 4. CONFIGURAMOS EL INPUT DE CANTIDAD (Aquí está la magia)
+    const inputCant = document.getElementById('det-cantidad');
+    inputCant.value = 1;      // Reseteamos a 1
+    inputCant.min = 1;        // Mínimo 1
+    inputCant.max = disponibleParaCliente; // <--- ¡ESTO BLOQUEA EL 7!
+
+    // Limpiamos observaciones y actualizamos total
     document.getElementById('det-obs').value = '';
-    calcularTotalDetalle(); // Actualiza el precio total del modal
+    calcularTotalDetalle(); 
     
+    // Mostramos el modal
     document.getElementById('modal-detalle').style.display = 'flex';
 }
 
@@ -310,22 +311,42 @@ function actualizarTotalModal() {
 }
 
 function confirmarAgregarAlCarrito() {
-    let stockMaximo = productoTemporal.stockMax;
-    let cantidadEnCarrito = 0;
-    for (let item of carrito) {
-        if (item.nombre === productoTemporal.nombre) cantidadEnCarrito += (item.cantidad || 1);
-    }
+    const cantidad = parseInt(document.getElementById('det-cantidad').value);
+    const obs = document.getElementById('det-obs').value;
 
-    if ((cantidadEnCarrito + productoTemporal.cantidad) > stockMaximo) {
-        alert(`No hay suficiente stock. Disponibles: ${stockMaximo}`);
+    // 1. Validar que sea número positivo
+    if (isNaN(cantidad) || cantidad < 1) {
+        alert("La cantidad debe ser al menos 1");
         return;
     }
 
-    productoTemporal.observacion = document.getElementById('det-obs').value;
-    carrito.push({ ...productoTemporal });
+    // 2. VALIDAR TOPE MÁXIMO (DOBLE SEGURIDAD)
+    const maximoPermitido = productoTemporal.stock - STOCK_SEGURIDAD;
+    
+    if (cantidad > maximoPermitido) {
+        alert(`Solo puedes llevar un máximo de ${maximoPermitido} unidades de este producto.`);
+        // Corregimos el valor visualmente para ayudar al cliente
+        document.getElementById('det-cantidad').value = maximoPermitido;
+        calcularTotalDetalle();
+        return; 
+    }
+
+    // 3. Agregar al Carrito (Lógica normal)
+    const item = {
+        nombre: productoTemporal.nombre,
+        precioBase: productoTemporal.precio, // Guardamos precio unitario para cálculos
+        precio: productoTemporal.precio * cantidad, // Precio total item
+        cantidad: cantidad,
+        obs: obs,
+        imagen: productoTemporal.imagen
+    };
+
+    carrito.push(item);
     actualizarCarritoUI();
-    document.getElementById('modal-detalle').style.display = 'none';
-    toggleCarrito(); 
+    cerrarModal('modal-detalle');
+    
+    // Feedback visual (opcional)
+    alert("¡Producto agregado!"); 
 }
 
 // --- 4. BUSCADOR Y FILTROS (CORREGIDO) ---
