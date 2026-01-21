@@ -1,4 +1,5 @@
 // --- VARIABLES GLOBALES ---
+const SESSION_ID = 'sess-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 let carrito = [];
 let productoTemporal = {};
 let tipoEntrega = 'delivery'; 
@@ -8,10 +9,11 @@ let configGlobal = {}; // Aquí guardaremos lo que diga el Excel
 let costoEnvioSeleccionado = 0; // Guardará el costo actual (0, 4000, 7500...)
 let listaCupones = []; // Aquí se guardarán los cupones válidos
 let descuentoCupón = 0; // El monto ($) que descontaremos
+const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycby5apEskj7w7j2GnXyLobjJrU0gPOsVzXv1M4H47q5K_qZA0yFd-CpaevKXiaswiqcn-w/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbxdyJmlLMUoJpoy3HzKRokzWpGts4CYq6fJdslUrCc5cxCzdMopmHdF1jFsGisgRP00gQ/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -185,11 +187,15 @@ function crearTarjetaProducto(p, contenedor) {
     div.setAttribute('data-busqueda', textoBuscable); 
 
     let botonHTML = '';
-    if (p.stock > 0) {
+    
+    // --- CAMBIO CLAVE AQUÍ ---
+    // Solo mostramos botón si el stock supera la seguridad
+    if (p.stock > STOCK_SEGURIDAD) {
         botonHTML = `<button class="btn-agregar" onclick="prepararCompra('${p.nombre}')">
                         <i class="fas fa-plus"></i> Agregar
                      </button>`;
     } else {
+        // Si stock es 1 o 0, mostramos Agotado
         botonHTML = `<button class="btn-agregar agotado" disabled>Agotado</button>`;
     }
 
@@ -197,10 +203,8 @@ function crearTarjetaProducto(p, contenedor) {
     const descSafe = p.descripcion ? p.descripcion.replace(/'/g, "\\'") : '';
     const nutriSafe = p.nutricion ? p.nutricion.replace(/'/g, "\\'") : '';
 
-    // --- LÓGICA DE PRECIO OFERTA ---
+    // Lógica de Precio Oferta (que ya hicimos)
     let htmlPrecio = `<p class="price">$${p.precio.toLocaleString('es-CL')}</p>`;
-    
-    // Si existe precioAntes y es mayor al precio actual, mostramos la oferta
     if (p.precioAntes && p.precioAntes > p.precio) {
         htmlPrecio = `
             <div class="precio-oferta-container">
@@ -232,10 +236,37 @@ function crearTarjetaProducto(p, contenedor) {
 
 // --- 3. LÓGICA DE COMPRA ---
 function prepararCompra(nombreProducto) {
-    const producto = inventarioGlobal.find(p => p.nombre === nombreProducto);
-    if (producto) {
-        abrirDetalle(producto.nombre, producto.precio, producto.imagen, producto.stock);
+    // Buscamos el producto en el inventario global
+    productoTemporal = inventarioGlobal.find(p => p.nombre === nombreProducto);
+    if (!productoTemporal) return;
+
+    // --- CÁLCULO DEL DISPONIBLE REAL ---
+    // Si hay 10, disponible es 9.
+    const disponibleParaCliente = productoTemporal.stock - STOCK_SEGURIDAD;
+
+    if (disponibleParaCliente <= 0) {
+        alert("Lo sentimos, este producto acaba de agotarse.");
+        return;
     }
+
+    // Llenamos el modal
+    document.getElementById('det-img').src = productoTemporal.imagen;
+    document.getElementById('det-nombre').innerText = productoTemporal.nombre;
+    document.getElementById('det-precio').innerText = '$' + productoTemporal.precio.toLocaleString('es-CL');
+    document.getElementById('det-desc').innerText = productoTemporal.descripcion;
+    
+    // Configuramos el input de cantidad
+    const inputCant = document.getElementById('det-cantidad');
+    inputCant.value = 1;
+    inputCant.max = disponibleParaCliente; // <--- TOPE MÁXIMO
+    
+    // (Opcional) Mostrar el stock disponible al cliente
+    // document.getElementById('msg-stock-modal').innerText = `Disponibles: ${disponibleParaCliente}`;
+
+    document.getElementById('det-obs').value = '';
+    calcularTotalDetalle(); // Actualiza el precio total del modal
+    
+    document.getElementById('modal-detalle').style.display = 'flex';
 }
 
 function abrirDetalle(nombre, precio, imagen, stockDisponible) {
@@ -692,4 +723,38 @@ async function cargarCupones() {
         const response = await fetch(`${SHEET_API}?action=obtenerCupones`);
         listaCupones = await response.json();
     } catch (e) { console.error("Error cupones:", e); }
+}
+
+async function solicitarReservaStock() {
+    // Mostramos un loader o cambiamos el texto del botón
+    const btn = document.getElementById('btn-ir-pago'); // Asumiendo que tienes este ID en el botón de ir a pago
+    const textoOriginal = btn ? btn.innerText : "";
+    if(btn) { btn.innerText = "Verificando Stock..."; btn.disabled = true; }
+
+    const datosReserva = {
+        accion: "reservar",
+        idSesion: SESSION_ID,
+        items: carrito.map(p => ({ nombre: p.nombre, cantidad: p.cantidad }))
+    };
+
+    try {
+        const response = await fetch(SHEET_API, {
+            method: 'POST',
+            body: JSON.stringify(datosReserva)
+        });
+        const resultado = await response.json();
+
+        if (resultado.result === "success") {
+            // Éxito: Pasamos a la vista de pago
+            irAPago();
+        } else {
+            // Error: Alguien ganó el stock
+            alert("⚠️ " + resultado.error);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error de conexión. Intenta de nuevo.");
+    } finally {
+        if(btn) { btn.innerText = textoOriginal; btn.disabled = false; }
+    }
 }
