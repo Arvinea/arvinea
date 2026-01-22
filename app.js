@@ -294,24 +294,67 @@ function abrirDetalle(nombre, precio, imagen, stockDisponible) {
 }
 
 function cambiarCantidad(delta) {
-    let nuevaCantidad = productoTemporal.cantidad + delta;
-    let stockMaximo = productoTemporal.stockMax;
+    const input = document.getElementById('det-cantidad');
+    const maximo = parseInt(input.max); // El tope que pusimos según el stock
+    let valorActual = parseInt(input.value) || 1;
+    let nuevoValor = valorActual + delta;
 
-    // Verificar carrito actual
-    let cantidadEnCarrito = 0;
-    for (let item of carrito) {
-        if (item.nombre === productoTemporal.nombre) cantidadEnCarrito += item.cantidad;
+    // Solo cambiamos si está dentro de los límites (1 y Máximo)
+    if (nuevoValor >= 1 && nuevoValor <= maximo) {
+        input.value = nuevoValor;
+        calcularTotalDetalle(); // Actualizamos el precio total
+    } else if (nuevoValor > maximo) {
+        // Opcional: Pequeña vibración o alerta visual si intenta pasar el stock
+        input.style.color = "red";
+        setTimeout(() => input.style.color = "black", 200);
     }
+}
+
+// --- NUEVA FUNCIÓN: CAMBIAR CANTIDAD EN EL CARRITO ---
+function cambiarCantidadCarrito(index, delta) {
+    const item = carrito[index];
+    if (!item) return;
+
+    // 1. Buscamos el stock real del producto
+    const productoOriginal = inventarioGlobal.find(p => p.nombre === item.nombre);
+    if (!productoOriginal) return;
+
+    const stockMaximo = productoOriginal.stock - STOCK_SEGURIDAD;
     
-    let limiteReal = stockMaximo - cantidadEnCarrito;
+    // 2. Calculamos cuánto llevamos en TOTAL de este producto en todo el carrito
+    // (Por si el cliente agregó el mismo producto en 2 filas distintas)
+    let cantidadTotalEnCarro = 0;
+    carrito.forEach(c => {
+        if(c.nombre === item.nombre) cantidadTotalEnCarro += c.cantidad;
+    });
 
-    if (nuevaCantidad >= 1 && nuevaCantidad <= limiteReal) {
-        productoTemporal.cantidad = nuevaCantidad;
-        document.getElementById('det-cantidad').innerText = productoTemporal.cantidad;
-        actualizarTotalModal();
-    } else if (nuevaCantidad > limiteReal) {
-        alert(`Stock limitado. Máximo disponible: ${stockMaximo}`);
+    // 3. Validar SUBIDA (+)
+    if (delta > 0) {
+        // Si al sumar 1 nos pasamos del stock real, bloqueamos
+        if (cantidadTotalEnCarro + 1 > stockMaximo) {
+            alert(`Stock limitado. Máximo disponible: ${stockMaximo}`);
+            return;
+        }
     }
+
+    // 4. Calcular nueva cantidad
+    const nuevaCantidad = item.cantidad + delta;
+
+    // 5. Validar BAJADA (-)
+    if (nuevaCantidad < 1) {
+        // Si baja de 1, preguntamos si quiere eliminar
+        if(confirm("¿Deseas eliminar este producto del pedido?")) {
+            eliminarItem(index);
+        }
+        return;
+    }
+
+    // 6. Aplicar cambio
+    item.cantidad = nuevaCantidad;
+    // Importante: Actualizamos el precio total de esa línea (PrecioUnitario * Cantidad)
+    item.precio = item.precioBase * nuevaCantidad; 
+    
+    actualizarCarritoUI();
 }
 
 function actualizarTotalModal() {
@@ -338,39 +381,33 @@ function confirmarAgregarAlCarrito() {
     const cantidad = parseInt(document.getElementById('det-cantidad').value);
     const obs = document.getElementById('det-obs').value;
 
-    // 1. Validar que sea número positivo
-    if (isNaN(cantidad) || cantidad < 1) {
-        alert("La cantidad debe ser al menos 1");
-        return;
-    }
+    // Validaciones
+    if (isNaN(cantidad) || cantidad < 1) return;
 
-    // 2. VALIDAR TOPE MÁXIMO (DOBLE SEGURIDAD)
     const maximoPermitido = productoTemporal.stock - STOCK_SEGURIDAD;
-    
     if (cantidad > maximoPermitido) {
-        alert(`Solo puedes llevar un máximo de ${maximoPermitido} unidades de este producto.`);
-        // Corregimos el valor visualmente para ayudar al cliente
-        document.getElementById('det-cantidad').value = maximoPermitido;
-        calcularTotalDetalle();
-        return; 
+        alert("Stock insuficiente."); return; 
     }
 
-    // 3. Agregar al Carrito (Lógica normal)
+    // Crear ítem
     const item = {
         nombre: productoTemporal.nombre,
-        precioBase: productoTemporal.precio, // Guardamos precio unitario para cálculos
-        precio: productoTemporal.precio * cantidad, // Precio total item
+        precioBase: productoTemporal.precio,
+        precio: productoTemporal.precio * cantidad,
         cantidad: cantidad,
         obs: obs,
         imagen: productoTemporal.imagen
     };
 
+    // Agregar y Actualizar
     carrito.push(item);
     actualizarCarritoUI();
-    cerrarModal('modal-detalle');
     
-    // Feedback visual (opcional)
-    alert("¡Producto agregado!"); 
+    // --- AQUÍ ESTABA EL ERROR DE CIERRE ---
+    cerrarDetalle(); // Antes decía cerrarModal() y esa función no existía
+    
+    // Feedback visual opcional
+    // alert("¡Producto agregado!"); 
 }
 
 // --- 4. BUSCADOR Y FILTROS (CORREGIDO) ---
@@ -452,15 +489,29 @@ function actualizarCarritoUI() {
     carrito.forEach((item, index) => {
         const subtotal = item.precioBase * item.cantidad;
         total += subtotal;
+        
+        // --- AQUÍ ESTÁ EL CAMBIO VISUAL ---
         contenedor.innerHTML += `
             <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid #f0f0f0; padding-bottom:10px;">
                 <img src="${item.imagen}" style="width:50px; height:50px; object-fit:contain; border-radius:4px;">
+                
                 <div style="flex:1;">
-                    <div style="font-weight:bold; font-size:0.9rem;">${item.cantidad}x ${item.nombre}</div>
-                    <div style="font-size:0.8rem; color:#666;">${item.observacion || ''}</div>
-                    <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="font-weight:bold; font-size:0.9rem;">${item.nombre}</div>
+                        <i class="fas fa-trash" style="color:#e74c3c; cursor:pointer;" onclick="eliminarItem(${index})" title="Eliminar"></i>
+                    </div>
+
+                    <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">${item.observacion || ''}</div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        
+                        <div style="display:flex; align-items:center; gap:5px; background:#f9f9f9; border-radius:4px; border:1px solid #eee; padding:2px;">
+                            <button onclick="cambiarCantidadCarrito(${index}, -1)" style="width:24px; height:24px; border:none; background:white; cursor:pointer; font-weight:bold; border-radius:3px; color:#555;">-</button>
+                            <span style="font-size:0.9rem; font-weight:bold; min-width:20px; text-align:center;">${item.cantidad}</span>
+                            <button onclick="cambiarCantidadCarrito(${index}, 1)" style="width:24px; height:24px; border:none; background:white; cursor:pointer; font-weight:bold; border-radius:3px; color:var(--primary);">+</button>
+                        </div>
+
                         <span style="color:var(--primary); font-weight:bold;">$${subtotal.toLocaleString('es-CL')}</span>
-                        <i class="fas fa-trash" style="color:#e74c3c; cursor:pointer;" onclick="eliminarItem(${index})"></i>
                     </div>
                 </div>
             </div>`;
