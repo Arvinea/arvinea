@@ -319,6 +319,21 @@ function actualizarTotalModal() {
     document.getElementById('det-total-calc').innerText = '$' + total.toLocaleString('es-CL');
 }
 
+// --- FUNCIÓN QUE FALTABA ---
+function calcularTotalDetalle() {
+    const input = document.getElementById('det-cantidad');
+    let cantidad = parseInt(input.value) || 1;
+    
+    // Si el usuario borra el número, asumimos 1 visualmente
+    if (cantidad < 1) cantidad = 1;
+
+    // productoTemporal tiene los datos del producto abierto
+    const total = productoTemporal.precio * cantidad;
+    
+    document.getElementById('det-total-calc').innerText = '$' + total.toLocaleString('es-CL');
+}
+
+
 function confirmarAgregarAlCarrito() {
     const cantidad = parseInt(document.getElementById('det-cantidad').value);
     const obs = document.getElementById('det-obs').value;
