@@ -1,3 +1,6 @@
+* {
+    box-sizing: border-box; /* Esto evita que los elementos se salgan del ancho */
+}
 :root {
     /* --- NUEVA PALETA: ORGANIC SOPHISTICATED --- */
     --primary: #2d4f1e;       /* Verde Oliva Profundo (Elegancia/Naturaleza) */
@@ -181,7 +184,7 @@ body {
     background-color: #fff; border-bottom: 1px solid #f9f9f9;
 }
 .product-image img { 
-    width: 100%; height: 100%; object-fit: cover; transition: 0.6s; 
+    width: 100%; height: 100%; object-fit: contain; transition: 0.6s; padding: 5px;
 }
 .product-card:hover .product-image img { transform: scale(1.08); }
 
@@ -368,8 +371,36 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .nav-bar { flex-wrap: wrap; gap: 10px; }
-    .search-wrapper { order: 3; width: 100%; margin: 5px 0; max-width: none; }
+    /* 1. Permitimos que el header crezca hacia abajo si el buscador baja */
+    .header-principal {
+        height: auto; 
+        min-height: 70px;
+        padding: 10px 20px;
+        flex-direction: column; /* Apila elementos si es necesario */
+    }
+
+    .nav-bar { 
+        flex-wrap: wrap; 
+        gap: 15px; 
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* 2. Ajustamos el buscador para que no se desborde */
+    .search-wrapper { 
+        order: 3; 
+        width: 100%; 
+        margin: 10px 0 5px 0; 
+        max-width: none; 
+        height: 45px; /* Altura táctil cómoda */
+    }
+    
+    /* 3. Ajustamos el tamaño del texto de la promo para que no rompa la barra */
+    .promo-bar {
+        font-size: 0.8rem; /* Texto más pequeño en celular */
+        padding: 5px;
+    }
+
     .hero-carousel { height: 280px; }
     .hero-content h1 { font-size: 2.2rem; }
     .sidebar { width: 100%; max-width: none; }
@@ -388,11 +419,6 @@ body {
     display: block;
 }
 
-.logo-text-img {
-    height: 90px;       /* ajusta según tu PNG/SVG */
-    object-fit: contain;
-    display: block;
-}
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
