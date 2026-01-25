@@ -421,19 +421,33 @@ h1, h2, h3,
         font-size: 0.8rem; /* Texto más pequeño en celular */
         padding: 5px;
     }
-
-    .hero-carousel { height: 280px; }
+    .hero-content {
+        padding: 0 15px; /* Margen lateral para que el texto no toque los bordes */
+        width: 100%;     /* Asegura que use el ancho disponible */
+    }
+    .hero-carousel { height: 380px; }
     .hero-content h1 { 
-    font-size: 3.5rem; 
-    margin-bottom: 0.5rem; 
+    font-size: 2rem; 
+    margin-bottom: 10px; 
     text-shadow: 2px 2px 10px rgba(0,0,0,0.5); 
     font-weight: 500;
+    line-height: 1.2;
     text-transform: uppercase;
 }
     .sidebar { width: 100%; max-width: none; }
 
     .logo-text-img {
         height: 40px; /* Un tamaño equilibrado para móvil */
+    }
+    .hero-content p {
+        font-size: 1rem; /* Texto más pequeño y legible */
+        margin-bottom: 20px;
+        line-height: 1.4;
+    }
+
+    .hero-content button {
+        padding: 10px 25px; /* Margen lateral para que el texto no toque los bordes */
+        font-size: 0.95rem;     /* Asegura que use el ancho disponible */
     }
 }
 
