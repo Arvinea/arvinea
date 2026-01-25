@@ -177,14 +177,22 @@ body {
 
 /* Imagen del producto */
 .product-image { 
-    height: 250px; 
+    width: 100%;
+    aspect-ratio: 1 / 1; /* <--- MAGIA: Esto fuerza que la caja sea CUADRADA */
+    height: auto;        /* Quitamos la altura fija de 250px */
     overflow: hidden; 
     position: relative; 
     cursor: pointer;
-    background-color: #fff; border-bottom: 1px solid #f9f9f9;
+    background-color: #fff; 
+    border-bottom: 1px solid #f9f9f9;
 }
+
 .product-image img { 
-    width: 100%; height: 100%; object-fit: contain; transition: 0.6s; padding: 5px;
+    width: 100%; 
+    height: 100%; 
+    object-fit: contain; 
+    transition: 0.6s; 
+    padding: 0; /* <--- CAMBIO: Quitamos el relleno para que la foto ocupe todo */
 }
 .product-card:hover .product-image img { transform: scale(1.08); }
 
@@ -404,6 +412,10 @@ body {
     .hero-carousel { height: 280px; }
     .hero-content h1 { font-size: 2.2rem; }
     .sidebar { width: 100%; max-width: none; }
+
+    .logo-text-img {
+        height: 40px; /* Un tamaño equilibrado para móvil */
+    }
 }
 
 .logo-container {
@@ -414,7 +426,7 @@ body {
 }
 
 .logo-text-img {
-    height: 32px;       /* ajusta según tu PNG/SVG */
+    height: 50px;       /* ajusta según tu PNG/SVG */
     object-fit: contain;
     display: block;
 }
