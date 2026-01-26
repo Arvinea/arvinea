@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbxmSAfaIyQBqqREEe3eD_2lMWzLlzQbge4tozyo3ECKdqIe_iNcZG-DLaRgTvtbrqkkWA/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbyoRt7hECoMSx1HmMG34pvkrG2llfmiVZIbD38HgdiKbKV64wTui3zNY6C7gY_TmyKCFw/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
