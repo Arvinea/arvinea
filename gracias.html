@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="img/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>¡Pedido Recibido! | Arvinea Organic</title>
     <link rel="stylesheet" href="styles.css">
@@ -80,6 +81,38 @@
         }
         .btn-volver-tienda:hover { color: #2d4f1e; text-decoration: underline; }
 
+        /* Estilos Input Copiar */
+        .input-copiar-wrapper {
+            display: flex; 
+            gap: 5px; 
+            background: white; 
+            padding: 5px; 
+            border-radius: 6px; 
+            border: 1px solid #ddd;
+            margin-top: 10px;
+        }
+        .input-copiar {
+            border: none;
+            width: 100%;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            outline: none;
+            letter-spacing: 1px;
+        }
+        .btn-copiar {
+            background: #856404;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-copiar:active { transform: scale(0.95); }
+
         @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
@@ -109,16 +142,21 @@
                     <i class="fas fa-exclamation-triangle"></i> <strong>MUY IMPORTANTE</strong>
                 </div>
                 
-                <p style="margin: 10px 0; font-size: 0.95rem; color: #555;">
-                    Al transferir, debes escribir este código en el <strong>Asunto</strong> o <strong>Mensaje</strong> del banco:
+                <p style="margin: 10px 0; font-size: 0.95rem; color: #555; text-align: center;">
+                    N° de Pedido: <strong id="lbl-id-visual">Cargando...</strong>
                 </p>
 
-                <div style="text-align: center; margin: 15px 0;">
-                    <span class="dato-valor" id="lbl-id" style="font-size: 1.8rem; background: white; padding: 8px 20px; border: 2px solid #000; border-radius: 4px; font-weight:bold; color:#333;">Cargando...</span>
+                <p style="margin: 10px 0; font-size: 0.9rem; color: #856404; text-align: left;">
+                    👇 Copia este código en el <strong>Mensaje</strong> del banco (sin guiones):
+                </p>
+
+                <div class="input-copiar-wrapper">
+                    <input type="text" id="bank-code-input" class="input-copiar" readonly value="...">
+                    <button onclick="copiarCodigo()" class="btn-copiar">Copiar</button>
                 </div>
                 
-                <p style="font-size: 0.85rem; color: #666; margin:0;">
-                    (Si lo pones, tu pago se aprueba automáticamente en aprox. 10 min)
+                <p style="font-size: 0.8rem; color: #666; margin: 10px 0 0 0; text-align: center;">
+                    (Con esto el sistema aprueba tu pago en minutos)
                 </p>
             </div>
 
@@ -156,21 +194,45 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             // 1. Recuperar datos
-            const id = localStorage.getItem('ultimo_pedido_id') || "Pendiente";
+            const idOriginal = localStorage.getItem('ultimo_pedido_id') || "Pendiente";
             const total = localStorage.getItem('ultimo_pedido_total') || "0";
 
-            // 2. Mostrar en la tarjeta
-            document.getElementById('lbl-id').innerText = id;
+            // 2. Mostrar ID "Bonito" (con guiones) para referencia visual
+            document.getElementById('lbl-id-visual').innerText = idOriginal;
+
+            // 3. Generar ID "Limpio" (sin guiones) para el banco
+            // La expresión regular /-/g busca todos los guiones y los reemplaza por nada
+            const idBanco = idOriginal.replace(/-/g, ''); 
+            document.getElementById('bank-code-input').value = idBanco;
+
+            // 4. Mostrar total
             document.getElementById('lbl-total').innerText = "$" + parseInt(total).toLocaleString('es-CL');
 
-            // 3. Crear mensaje para WhatsApp
-            const wspMsg = `Hola Arvinea 🌱, acabo de hacer el pedido *${id}* por un total de *$${parseInt(total).toLocaleString('es-CL')}*. Quedo atento a la confirmación.`;
+            // 5. Crear mensaje para WhatsApp (Usamos el ID original con guiones aquí porque es más legible para humanos)
+            const wspMsg = `Hola Arvinea 🌱, acabo de hacer el pedido *${idOriginal}* por un total de *$${parseInt(total).toLocaleString('es-CL')}*. Quedo atento a la confirmación.`;
             
-            // 4. Generar link
+            // 6. Generar link
             const wspLink = `https://wa.me/56950323402?text=${encodeURIComponent(wspMsg)}`;
-            
             document.getElementById('btn-wsp-dynamic').href = wspLink;
         });
+
+        // Función para el botón Copiar
+        function copiarCodigo() {
+            const copyText = document.getElementById("bank-code-input");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); /* Para celulares */
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                // Feedback visual simple
+                const btn = document.querySelector('.btn-copiar');
+                const originalText = btn.innerText;
+                btn.innerText = "¡Copiado!";
+                btn.style.background = "#27ae60";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "#856404";
+                }, 2000);
+            });
+        }
     </script>
 
 </body>
