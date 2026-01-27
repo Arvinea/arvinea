@@ -178,6 +178,7 @@ function filtrarSeccion(idObjetivo, btnClick) {
 }
 
 // --- 2. CREAR TARJETA HTML ---
+// --- 2. CREAR TARJETA HTML (VERSIÓN PRO: BUSCA EN MEMORIA) ---
 function crearTarjetaProducto(p, contenedor) {
     const div = document.createElement('div');
     div.classList.add('product-card');
@@ -188,23 +189,18 @@ function crearTarjetaProducto(p, contenedor) {
 
     let botonHTML = '';
     
-    // --- CAMBIO CLAVE AQUÍ ---
-    // Solo mostramos botón si el stock supera la seguridad
+    // Preparamos el nombre para que no rompa el botón si tiene comillas
+    const nombreSafe = p.nombre.replace(/'/g, "\\'");
+
     if (p.stock > STOCK_SEGURIDAD) {
-        botonHTML = `<button class="btn-agregar" onclick="prepararCompra('${p.nombre}')">
+        botonHTML = `<button class="btn-agregar" onclick="prepararCompra('${nombreSafe}')">
                         <i class="fas fa-plus"></i> Agregar
                      </button>`;
     } else {
-        // Si stock es 1 o 0, mostramos Agotado
         botonHTML = `<button class="btn-agregar agotado" disabled>Agotado</button>`;
     }
 
-    const nombreSafe = p.nombre.replace(/'/g, "\\'");
-    // El cambio clave: .replace(/\n/g, "\\n") arregla los saltos de línea
-    const descSafe = p.descripcion ? p.descripcion.replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "") : '';
-    const nutriSafe = p.nutricion ? p.nutricion.replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "") : '';
-
-    // Lógica de Precio Oferta (que ya hicimos)
+    // Lógica de Precio Oferta
     let htmlPrecio = `<p class="price">$${p.precio.toLocaleString('es-CL')}</p>`;
     if (p.precioAntes && p.precioAntes > p.precio) {
         htmlPrecio = `
@@ -216,17 +212,9 @@ function crearTarjetaProducto(p, contenedor) {
         `;
     }
 
-    let badgeHTML = '';
-    
-    // Prioridad: Si es 2x1 gana sobre el % de descuento normal
-    if (p.promo === '2X1' || p.promo === '3X2') {
-        badgeHTML = `<span class="badge-sale promo-special">${p.promo}</span>`;
-    } else if (p.precioAntes && p.precioAntes > p.precio) {
-        badgeHTML = '<span class="badge-sale">%</span>';
-    }
-
+    // AHORA EL ONCLICK ES MUY CORTO Y SEGURO: Solo pasa el nombre
     div.innerHTML = `
-        <div class="product-image" onclick="abrirModalInfo('${nombreSafe}', '${descSafe}', '${nutriSafe}')">
+        <div class="product-image" onclick="abrirModalInfo('${nombreSafe}')">
             <img src="${p.imagen}" alt="${p.nombre}">
             ${(p.precioAntes && p.precioAntes > p.precio) ? '<span class="badge-sale">%</span>' : ''}
         </div>
@@ -235,7 +223,7 @@ function crearTarjetaProducto(p, contenedor) {
             ${htmlPrecio}
             <div style="display:flex; gap:10px; flex-direction:column;">
                 ${botonHTML}
-                <button class="btn-info-nutri" onclick="abrirModalInfo('${nombreSafe}', '${descSafe}', '${nutriSafe}')">
+                <button class="btn-info-nutri" onclick="abrirModalInfo('${nombreSafe}')">
                     <i class="fas fa-info-circle"></i> Info Nutricional
                 </button>
             </div>
@@ -448,25 +436,47 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 // --- 5. MODALES Y UI ---
-function abrirModalInfo(nombre, desc, nutriData) {
-    document.getElementById('modal-titulo').innerText = nombre;
-    document.getElementById('modal-desc').innerText = desc || "Sin descripción.";
+// --- FUNCIÓN INTELIGENTE PARA ABRIR MODAL ---
+function abrirModalInfo(nombreProducto) {
+    // 1. Buscamos el producto completo en la memoria usando el nombre
+    const producto = inventarioGlobal.find(p => p.nombre === nombreProducto);
     
-    const tablaBody = document.getElementById('modal-nutri-body');
-    tablaBody.innerHTML = '';
-    
-    if (nutriData) {
-        const lineas = nutriData.split('|');
-        lineas.forEach(linea => {
-            const partes = linea.split(':');
-            const row = `<tr><td>${partes[0]}</td><td><strong>${partes[1] || ''}</strong></td></tr>`;
-            tablaBody.innerHTML += row;
-        });
-        document.getElementById('tabla-nutricional').style.display = 'table';
-    } else {
-        document.getElementById('tabla-nutricional').style.display = 'none';
+    if (!producto) {
+        console.error("Producto no encontrado:", nombreProducto);
+        return;
     }
+
+    // 2. Llenamos los datos
+    document.getElementById('modal-titulo').innerText = producto.nombre;
+    
+    // Aquí el texto largo se inserta seguro, respetando saltos de línea
+    document.getElementById('modal-desc').innerText = producto.descripcion || "Sin descripción."; 
+    
+    // 3. Generar Tabla Nutricional
+    const tablaBody = document.getElementById('modal-nutri-body');
+    tablaBody.innerHTML = ''; // Limpiar anterior
+
+    if (producto.nutricion && producto.nutricion.includes('|')) {
+        const items = producto.nutricion.split('|');
+        items.forEach(item => {
+            const partes = item.split(':');
+            if (partes.length === 2) {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `<td>${partes[0].trim()}</td><td>${partes[1].trim()}</td>`;
+                tablaBody.appendChild(fila);
+            }
+        });
+        document.querySelector('.nutri-box').style.display = 'block';
+    } else {
+        document.querySelector('.nutri-box').style.display = 'none';
+    }
+
+    // 4. Mostrar Modal
     document.getElementById('modal-info-producto').style.display = 'flex';
+}
+
+function cerrarModalInfo() {
+    document.getElementById('modal-info-producto').style.display = 'none';
 }
 
 function cerrarModalInfo() { document.getElementById('modal-info-producto').style.display = 'none'; }
