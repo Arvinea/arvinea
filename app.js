@@ -200,8 +200,9 @@ function crearTarjetaProducto(p, contenedor) {
     }
 
     const nombreSafe = p.nombre.replace(/'/g, "\\'");
-    const descSafe = p.descripcion ? p.descripcion.replace(/'/g, "\\'") : '';
-    const nutriSafe = p.nutricion ? p.nutricion.replace(/'/g, "\\'") : '';
+    // El cambio clave: .replace(/\n/g, "\\n") arregla los saltos de línea
+    const descSafe = p.descripcion ? p.descripcion.replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "") : '';
+    const nutriSafe = p.nutricion ? p.nutricion.replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "") : '';
 
     // Lógica de Precio Oferta (que ya hicimos)
     let htmlPrecio = `<p class="price">$${p.precio.toLocaleString('es-CL')}</p>`;
