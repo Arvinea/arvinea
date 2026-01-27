@@ -244,6 +244,21 @@ h1, h2, h3,
     border-radius: 16px; padding: 30px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     position: relative; animation: slideUp 0.4s ease;
+    max-height: 90vh;       /* Altura máxima: 90% de la pantalla */
+    display: flex;          /* Usamos Flexbox para ordenar */
+    flex-direction: column;
+}
+
+/* --- NUEVA CLASE PARA SCROLL INTERNO --- */
+.modal-body-scroll {
+    overflow-y: auto;    /* Activa el scroll vertical si es necesario */
+    flex: 1;             /* Ocupa todo el espacio disponible al medio */
+    margin-bottom: 15px; /* Espacio antes del botón cerrar */
+    padding-right: 10px; /* Evita que el texto toque la barra de scroll */
+    
+    /* Estilo para barra de scroll suave */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) #f1f1f1;
 }
 .modal-prod-title, #det-titulo {
     color: var(--primary); font-size: 1.8rem; margin-top: 0;
@@ -398,6 +413,11 @@ h1, h2, h3,
         min-height: 70px;
         padding: 10px 20px;
         flex-direction: column; /* Apila elementos si es necesario */
+    }
+
+    .info-card {
+        padding: 20px; /* Reducimos de 30px a 20px en celular */
+        width: 95%;    /* Aprovechamos más el ancho */
     }
 
     .nav-bar { 
