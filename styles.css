@@ -575,3 +575,9 @@ h1, h2, h3,
     font-size: 1rem;
     padding: 8px 12px;
 }
+
+/* --- ESTILOS PARA TEXTO ENRIQUECIDO (DESDE EXCEL) --- */
+.txt-rojo { color: #e74c3c; font-weight: bold; } /* Rojo Oferta */
+.txt-verde { color: var(--primary); font-weight: bold; } /* Tu Verde Marca */
+.txt-destacado { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; } /* Resaltador Amarillo */
+
