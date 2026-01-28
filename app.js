@@ -450,8 +450,8 @@ function abrirModalInfo(nombreProducto) {
     document.getElementById('modal-titulo').innerText = producto.nombre;
     
     // Aquí el texto largo se inserta seguro, respetando saltos de línea
-    document.getElementById('modal-desc').innerText = producto.descripcion || "Sin descripción."; 
-    
+    const descLimpia = producto.descripcion ? producto.descripcion.replace(/'/g, "\\'") : ""; // Limpieza básica
+    document.getElementById('modal-desc').innerHTML = formatearTextoDescripcion(descLimpia) || "Sin descripción.";
     // 3. Generar Tabla Nutricional
     const tablaBody = document.getElementById('modal-nutri-body');
     tablaBody.innerHTML = ''; // Limpiar anterior
@@ -905,4 +905,29 @@ async function solicitarReservaStock() {
     } finally {
         if(btn) { btn.innerText = textoOriginal; btn.disabled = false; }
     }
+}
+
+// --- FUNCIÓN DE FORMATO DE TEXTO (PARSER) ---
+function formatearTextoDescripcion(texto) {
+    if (!texto) return "";
+    
+    let t = texto;
+
+    // 1. Convertir saltos de línea (Enter) en HTML
+    // Esto ya lo hacíamos, pero aquí lo aseguramos
+    t = t.replace(/\n/g, '<br>');
+
+    // 2. Negrita: *Texto* -> <strong>Texto</strong>
+    t = t.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+
+    // 3. Rojo: {rojo}Texto{/rojo} -> <span class="txt-rojo">Texto</span>
+    t = t.replace(/\{rojo\}(.*?)\{\/rojo\}/gi, '<span class="txt-rojo">$1</span>');
+
+    // 4. Verde: {verde}Texto{/verde}
+    t = t.replace(/\{verde\}(.*?)\{\/verde\}/gi, '<span class="txt-verde">$1</span>');
+
+    // 5. Destacado: {nota}Texto{/nota} (Fondo amarillo)
+    t = t.replace(/\{nota\}(.*?)\{\/nota\}/gi, '<span class="txt-destacado">$1</span>');
+
+    return t;
 }
