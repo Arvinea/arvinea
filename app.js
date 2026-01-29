@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbyoRt7hECoMSx1HmMG34pvkrG2llfmiVZIbD38HgdiKbKV64wTui3zNY6C7gY_TmyKCFw/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbwAMoV3jCX2IoSqv0AZ9n_qshMP8yh8lflQy06Uct4kG0JTLHUu0gyGm8FYBDFykZekhg/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -849,12 +849,30 @@ async function cargarConfiguracion() {
         const response = await fetch(`${SHEET_API}?action=obtenerConfig`);
         configGlobal = await response.json();
 
-        // Si hay mensaje de barra activo, lo mostramos
+        // 1. Mensaje de la Barra Superior
         if (configGlobal.MensajeBarra) {
             const barra = document.getElementById('promo-bar');
             document.getElementById('promo-texto').innerText = configGlobal.MensajeBarra;
             barra.style.display = 'block';
         }
+
+        // 2. MODO TIENDA CERRADA (NUEVO)
+        // Si en Excel pusiste TiendaAbierta = NO
+        if (configGlobal.TiendaAbierta && configGlobal.TiendaAbierta.toUpperCase() === "NO") {
+            // Deshabilitar todos los botones de compra
+            // Usamos un pequeño delay para asegurar que los productos cargaron
+            setTimeout(() => {
+                const botones = document.querySelectorAll('.btn-agregar');
+                botones.forEach(btn => {
+                    btn.disabled = true;
+                    btn.innerHTML = "Cerrado Temporalmente";
+                    btn.style.background = "#95a5a6"; // Gris
+                    btn.style.cursor = "not-allowed";
+                });
+                alert("⚠️ AVISO: La tienda está en pausa operativa. Puedes ver los productos pero no comprar por el momento.");
+            }, 1000);
+        }
+
     } catch (e) { console.error("Error config:", e); }
 }
 
