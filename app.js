@@ -534,6 +534,7 @@ function actualizarCarritoUI() {
     const btnFlotante = document.getElementById('btn-flotante-carrito');
     if (carrito.length > 0) btnFlotante.style.display = 'flex';
     document.getElementById('sidebar-total').innerText = totalTexto;
+    localStorage.setItem('carritoArvinea', JSON.stringify(carrito));
 }
 
 function eliminarItem(index) {
@@ -882,6 +883,17 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarTarifas();
     cargarConfiguracion();
     cargarCupones();
+
+    const carritoGuardado = localStorage.getItem('carritoArvinea');
+    if (carritoGuardado) {
+        try {
+            carrito = JSON.parse(carritoGuardado);
+            actualizarCarritoUI(); // Esto redibuja el carrito guardado automáticamente
+        } catch (e) {
+            console.error("Error recuperando carrito", e);
+            localStorage.removeItem('carritoArvinea'); // Si falla, limpiamos
+        }
+    }
 });
 
 async function cargarCupones() {
