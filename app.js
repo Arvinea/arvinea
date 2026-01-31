@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbwDTaqacUONVLWGkYZstJrBC67ZcaDUZDSiBq2c12AGF6v7nToJUSNkki4TuzYvcvSXlw/execs';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbyKrgEfJtQIoUgKmqyMES2txvhFtmjQIBPAkkM_UHfwySz5MO0QkpX60n1YU291TDfvjw/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -892,10 +892,26 @@ async function cargarCupones() {
 }
 
 async function solicitarReservaStock() {
-    // Mostramos un loader o cambiamos el texto del botón
-    const btn = document.getElementById('btn-ir-pago'); // Asumiendo que tienes este ID en el botón de ir a pago
-    const textoOriginal = btn ? btn.innerText : "";
-    if(btn) { btn.innerText = "Verificando Stock..."; btn.disabled = true; }
+    // 1. OBTENER EL BOTÓN
+    // Asegúrate de que en el HTML el botón tenga id="btn-ir-pago"
+    // OJO: En tu HTML actual el botón dice: onclick="solicitarReservaStock()"
+    // Vamos a buscarlo por la clase si no tiene ID, o usa 'event.target'
+    
+    // Mejor estrategia: Dale un ID al botón en el HTML si no lo tiene.
+    // Supondremos que tiene id="btn-reservar-stock" (o usa el código de abajo que lo busca solito)
+    
+    const botones = document.getElementsByClassName('btn-primary');
+    let btn = null;
+    if (botones.length > 0) btn = botones[0]; // Tomamos el primer botón primario visible
+
+    const textoOriginal = btn ? btn.innerHTML : "Continuar";
+    
+    // 2. EFECTO DE CARGA (SPINNER)
+    if(btn) { 
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...'; 
+        btn.disabled = true; 
+        btn.style.opacity = "0.7";
+    }
 
     const datosReserva = {
         accion: "reservar",
@@ -921,7 +937,12 @@ async function solicitarReservaStock() {
         console.error(e);
         alert("Error de conexión. Intenta de nuevo.");
     } finally {
-        if(btn) { btn.innerText = textoOriginal; btn.disabled = false; }
+        // 3. RESTAURAR BOTÓN SI FALLA O AL TERMINAR
+        if(btn) { 
+            btn.innerHTML = textoOriginal; 
+            btn.disabled = false; 
+            btn.style.opacity = "1";
+        }
     }
 }
 
