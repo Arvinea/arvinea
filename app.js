@@ -912,7 +912,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if(inputNombre) inputNombre.value = "Venta Presencial";
         if(inputEmail) inputEmail.value = "caja@arvinea.cl"; // Email ficticio para que pase la validación
         if(inputFono) inputFono.value = "999999999";
-        if(inputRut) inputRut.value = "21.917.234-6"
+        if(inputRut) inputRut.value = "1-9"
 
         // 3. Auto-Aplicar Cupón CAJA (si existe en tu Excel)
         const inputCupon = document.getElementById('input-cupon');
