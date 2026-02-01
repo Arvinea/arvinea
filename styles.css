@@ -612,3 +612,16 @@ h1, h2, h3,
     transform: none;
     box-shadow: none;
 }
+
+.testimonios-section { padding: 40px 20px; background: #f9f9f9; text-align: center; }
+.grid-resenas { 
+    display: flex; gap: 20px; overflow-x: auto; padding: 20px; 
+    scroll-snap-type: x mandatory; 
+}
+.card-resena {
+    min-width: 280px; background: white; padding: 20px; 
+    border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    scroll-snap-align: center; text-align: left;
+}
+.estrellas { color: #f1c40f; margin-bottom: 10px; }
+.autor-resena { font-weight: bold; color: var(--primary); margin-top: 15px; display:block; }

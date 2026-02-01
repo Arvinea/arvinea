@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbz8pDJ9PNkvNYHjaUc_zlrOTeYhoL7gik8dyYYIcbJG3phxtwXBG4JqDQLPM6XiXn6mSg/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbzZmiM2Keqv_kVlsvgva1lOFYjbDBoYtBhgFMXaGpSgCmO8BIXda-tdKfLXhFKBB8LfQw/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -883,6 +883,8 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarTarifas();
     cargarConfiguracion();
     cargarCupones();
+    cargarResenas();
+
 
     const carritoGuardado = localStorage.getItem('carritoArvinea');
     if (carritoGuardado) {
@@ -926,6 +928,33 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("⚡ MODO CAJERO LISTO ⚡");
     }
 });
+
+async function cargarResenas() {
+    try {
+        const response = await fetch(`${SHEET_API}?action=obtenerValoraciones`);
+        const resenas = await response.json();
+        const contenedor = document.getElementById('contenedor-resenas');
+        
+        if(resenas.length === 0) {
+            contenedor.innerHTML = '<p>Sé el primero en dejar tu opinión.</p>';
+            return;
+        }
+        
+        contenedor.innerHTML = '';
+        resenas.forEach(r => {
+            const estrellasHTML = '<i class="fas fa-star"></i>'.repeat(r.estrellas);
+            const div = document.createElement('div');
+            div.className = 'card-resena';
+            div.innerHTML = `
+                <div class="estrellas">${estrellasHTML}</div>
+                <p>"${r.comentario}"</p>
+                <small style="color:#888;">Sobre: ${r.producto}</small>
+                <span class="autor-resena">- ${r.nombre}</span>
+            `;
+            contenedor.appendChild(div);
+        });
+    } catch(e) { console.error("Error reseñas", e); }
+}
 
 async function cargarCupones() {
     try {
