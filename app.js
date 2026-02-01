@@ -898,30 +898,32 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- MODO CAJERO AUTOMÁTICO ---
     const params = new URLSearchParams(window.location.search);
     if (params.get('modo') === 'caja') {
-        
-        // 1. Ocultar distracciones (Hero, Footer) para que cargue volando
+        console.log("⚡ Modo Cajero Activado");
+
+        // A. Ocultar distracciones
         const hero = document.querySelector('.hero-slider'); 
         if(hero) hero.style.display = 'none';
-        
-        // 2. Pre-llenar datos para no escribir nada
-        const inputNombre = document.getElementById('cliente-nombre');
-        const inputEmail = document.getElementById('cliente-email');
-        const inputFono = document.getElementById('cliente-telefono');
-        const inputRut = document.getElementById('cliente-rut');
-        
-        if(inputNombre) inputNombre.value = "Venta Presencial";
-        if(inputEmail) inputEmail.value = "caja@arvinea.cl"; // Email ficticio para que pase la validación
-        if(inputFono) inputFono.value = "999999999";
-        if(inputRut) inputRut.value = "1-9"
 
-        // 3. Auto-Aplicar Cupón CAJA (si existe en tu Excel)
-        const inputCupon = document.getElementById('input-cupon');
-        if(inputCupon) {
-            inputCupon.value = 'CAJA';
-            aplicarCupon(); // ¡Pum! Se aplica solo
-        }
+        // B. Pre-llenar datos del cliente (Con RUT y espera segura)
+        setTimeout(() => {
+            const inputNombre = document.getElementById('cliente-nombre');
+            const inputEmail = document.getElementById('cliente-email');
+            const inputFono = document.getElementById('cliente-telefono');
+            const inputRut = document.getElementById('cliente-rut'); // Rut
+            
+            if(inputNombre) inputNombre.value = "Venta Presencial";
+            if(inputEmail) inputEmail.value = "caja@arvinea.cl";
+            if(inputFono) inputFono.value = "999999999";
+            if(inputRut) inputRut.value = "1-9"; // Rut genérico válido
+        }, 500);
 
-        alert("⚡ MODO CAJERO ACTIVADO ⚡");
+        // C. AUTO-APLICAR CUPÓN (LA SOLUCIÓN)
+        // No buscamos el input visual. Fijamos la variable en memoria directamente.
+        // Así, cuando llegues al paso de Pago, el sistema ya sabrá que hay cupón.
+        codigoAplicado = 'CAJA';
+        
+        // (Opcional) Feedback para ti
+        alert("⚡ MODO CAJERO LISTO ⚡");
     }
 });
 
