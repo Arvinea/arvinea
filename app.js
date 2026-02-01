@@ -730,7 +730,7 @@ async function procesarPedidoFinal() {
         const datos = {
             cliente: nombre, email: email, rut: rut, telefono: telefono,
             entrega: tipoEntrega, ubicacion: ubicacionFinal,
-            pedido: pedidoTexto, total: totalCalculado, items: carrito
+            pedido: pedidoTexto, total: totalCalculado, items: carrito, cupon: codigoAplicado
         };
 
         const response = await fetch(SHEET_API, { method: 'POST', body: JSON.stringify(datos) });
@@ -893,6 +893,33 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Error recuperando carrito", e);
             localStorage.removeItem('carritoArvinea'); // Si falla, limpiamos
         }
+    }
+
+    // --- MODO CAJERO AUTOMÁTICO ---
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('modo') === 'caja') {
+        
+        // 1. Ocultar distracciones (Hero, Footer) para que cargue volando
+        const hero = document.querySelector('.hero-slider'); 
+        if(hero) hero.style.display = 'none';
+        
+        // 2. Pre-llenar datos para no escribir nada
+        const inputNombre = document.getElementById('cliente-nombre');
+        const inputEmail = document.getElementById('cliente-email');
+        const inputFono = document.getElementById('cliente-telefono');
+        
+        if(inputNombre) inputNombre.value = "Venta Presencial";
+        if(inputEmail) inputEmail.value = "caja@arvinea.cl"; // Email ficticio para que pase la validación
+        if(inputFono) inputFono.value = "999999999";
+
+        // 3. Auto-Aplicar Cupón CAJA (si existe en tu Excel)
+        const inputCupon = document.getElementById('input-cupon');
+        if(inputCupon) {
+            inputCupon.value = 'CAJA';
+            aplicarCupon(); // ¡Pum! Se aplica solo
+        }
+
+        alert("⚡ MODO CAJERO ACTIVADO ⚡");
     }
 });
 
