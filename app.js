@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbx6yXmIZJpiT5kI108ajqkXcJkcc5TG_vmBxb8VNJjeSSMifcXGy4ioSqsd2IhkFdn9Zw/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbzsjL93d-oEOYcogdla_BijUzneDpuDwA1YJgmj5v0mzrUNe2jTUITRgK6ugOAmlVLoJw/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -755,7 +755,9 @@ async function procesarPedidoFinal() {
         document.getElementById('real-total').value = totalCalculado;
         if(document.getElementById('real-email')) document.getElementById('real-email').value = email;
         if(document.getElementById('real-link-gestion')) document.getElementById('real-link-gestion').value = linkAprobar;
-
+        localStorage.removeItem('carritoArvinea'); // Borra la memoria
+        carrito = []; // Vacía la lista
+        actualizarCarritoUI(); // Actualiza visualmente a 0
         document.getElementById('form-real').submit();
 
     } catch (error) {
