@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbwy8a0nIl1uriKbT9esO9p-MdhFoR_ryW1v29JQTqb5F1h0uq5GAU8fWSxZnlqOSOMyEg/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbxFmF57zPU55vU19PiwpNOTZc1sS1sB3phLQBSVk-OqHUKtBQAvXdvzXPWGX8cfuBU/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -749,7 +749,7 @@ async function procesarPedidoFinal() {
         const linkAprobar = `${SHEET_API}?action=aprobar&id=${respuestaJson.idPedido}`;
         document.getElementById('real-cliente').value = nombre;
         document.getElementById('real-id').value = respuestaJson.idPedido;
-        document.getElementById('real-telefono').value = telefono;
+        document.getElementById('real-telefono').value = "Tlf: " + telefono;
         document.getElementById('real-direccion').value = ubicacionFinal;
         document.getElementById('real-pedido').value = pedidoTexto;
         document.getElementById('real-total').value = totalCalculado;
