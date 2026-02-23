@@ -55,7 +55,14 @@ async function cargarProductos() {
         });
 
         // 3. GENERAR SECCIONES Y BOTONES
-        const categoriasOrdenadas = Object.keys(grupos).sort();
+        const categoriasOrdenadas = Object.keys(grupos).sort((a, b) => {
+            // Si dos categorías tienen la misma cantidad de productos, las ordena alfabéticamente
+            if (grupos[b].length === grupos[a].length) {
+                return a.localeCompare(b);
+            }
+            // Ordena poniendo primero la que tiene más productos (de mayor a menor)
+            return grupos[b].length - grupos[a].length;
+        });
 
         if (categoriasOrdenadas.length === 0) {
             mainCatalogo.innerHTML = '<p style="text-align:center; padding:20px;">No hay productos disponibles.</p>';
