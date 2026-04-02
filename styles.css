@@ -625,3 +625,11 @@ h1, h2, h3,
 }
 .estrellas { color: #f1c40f; margin-bottom: 10px; }
 .autor-resena { font-weight: bold; color: var(--primary); margin-top: 15px; display:block; }
+
+.producto-sabor {
+    font-size: 0.9rem;
+    color: var(--text-light); /* Ese gris suave que ya usas */
+    margin-top: -5px;         /* Para pegarlo un poco al título */
+    margin-bottom: 10px;
+    font-style: italic;
+}

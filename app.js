@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 // 434
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbzymv-Q2YERcl7OKUteUCmP1d1NvwBHtZ99HnwmYVY4U62-Sag2WNkcWMVfiRwwJuz16A/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbxYHivEoZZTpcWTVxPq9pZodWVjaqH9JUEU7MRf25tuXIgDqV0NAs0NE4u7wX6sB4-3yw/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -219,7 +219,11 @@ function crearTarjetaProducto(p, contenedor) {
         `;
     }
 
-    // AHORA EL ONCLICK ES MUY CORTO Y SEGURO: Solo pasa el nombre
+    let htmlSabor = "";
+    if (p.sabor && p.sabor.trim() !== "" && p.sabor.toLowerCase() !== "null") {
+        htmlSabor = `<p class="producto-sabor">Sabor: ${p.sabor}</p>`;
+    }
+
     div.innerHTML = `
         <div class="product-image" onclick="abrirModalInfo('${nombreSafe}')">
             <img src="${p.imagen}" alt="${p.nombre}">
@@ -227,7 +231,8 @@ function crearTarjetaProducto(p, contenedor) {
         </div>
         <div class="product-info">
             <h3>${p.nombre}</h3>
-            ${htmlPrecio}
+            
+            ${htmlSabor} ${htmlPrecio}
             <div style="display:flex; gap:10px; flex-direction:column;">
                 ${botonHTML}
                 <button class="btn-info-nutri" onclick="abrirModalInfo('${nombreSafe}')">
@@ -715,13 +720,46 @@ async function procesarPedidoFinal() {
         if(!ubicacionFinal) { alert("Selecciona punto de retiro."); return; }
     }
 
-    let totalCalculado = 0;
-    carrito.forEach(i => totalCalculado += (i.precioBase * i.cantidad));
+    let subtotal = 0;
+    let totalDescuentoPromos = 0;
 
+    carrito.forEach(i => {
+        subtotal += (i.precioBase * i.cantidad);
+        const prodData = inventarioGlobal.find(p => p.nombre === i.nombre);
+        const promo = prodData ? prodData.promo : "";
+        let gratis = 0;
+        
+        if (promo === '2X1') gratis = Math.floor(i.cantidad / 2);
+        else if (promo === '3X2') gratis = Math.floor(i.cantidad / 3);
+        
+        if (gratis > 0) totalDescuentoPromos += (gratis * i.precioBase);
+    });
+
+    let montoTrasPromos = subtotal - totalDescuentoPromos;
+
+    // 2. Calcular Envío (Considerando Envío Gratis)
+    let costoEnvioFinal = (tipoEntrega === 'delivery') ? costoEnvioSeleccionado : 0;
+    if (configGlobal.EnvioGratis && montoTrasPromos >= parseInt(configGlobal.EnvioGratis)) {
+        if (tipoEntrega === 'delivery') costoEnvioFinal = 0;
+    }
+
+    // 3. Aplicar Descuento del Cupón
+    let descuentoCuponFinal = 0;
+    if (codigoAplicado && listaCupones.length > 0) {
+         const cuponData = listaCupones.find(c => c.codigo === codigoAplicado);
+         if (cuponData && cuponData.tipo === 'PORCENTAJE') {
+             descuentoCuponFinal = Math.round(montoTrasPromos * (cuponData.valor / 100));
+         } else if (cuponData && cuponData.tipo === 'MONTO') {
+             descuentoCuponFinal = cuponData.valor;
+         }
+    }
+
+    // 4. GRAN TOTAL FINAL
+    let totalCalculado = montoTrasPromos - descuentoCuponFinal + costoEnvioFinal;
+    if (totalCalculado < 0) totalCalculado = 0; // Evitar cobros negativos
+
+    // 5. Configurar Ubicación
     if (tipoEntrega === 'delivery') {
-        totalCalculado += costoEnvioSeleccionado;
-
-        // Agregar la región a la dirección para que sepas dónde mandar
         const regionNombre = document.getElementById('select-region').selectedOptions[0].text;
         ubicacionFinal = `${regionNombre} - ${ubicacionFinal}`;
     }
