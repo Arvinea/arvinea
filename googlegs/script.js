@@ -150,6 +150,18 @@ function doPost(e) {
         subject: "⏳ Confirma tu pedido " + idPedido + " - Arvinea Organic",
         htmlBody: cuerpoInstrucciones
       });
+
+      MailApp.sendEmail({
+        to: EMAIL_FELIPE,
+        subject: "🚨 ¡Nuevo Pedido Registrado! " + idPedido,
+        htmlBody: `
+          <h3>Un cliente acaba de hacer un pedido.</h3>
+          <p><strong>Cliente:</strong> ${data.cliente}</p>
+          <p><strong>Monto total:</strong> $${parseInt(data.total).toLocaleString('es-CL')}</p>
+          <p><strong>Productos:</strong> ${data.pedido}</p>
+          <p><em>Revisa tu cuenta de Mercado Pago para verificar la transferencia con el ID: ${idPedido}</em></p>
+        `
+      });
     }
 
     return ContentService.createTextOutput(JSON.stringify({ "result": "success", "idPedido": idPedido })).setMimeType(ContentService.MimeType.JSON);
