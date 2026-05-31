@@ -1093,7 +1093,7 @@ function formatearTextoDescripcion(texto) {
 }
 
 async function cargarCarrusel() {
-    const contenedor = document.getElementById('carrusel-dinamico');
+    const contenedorSlides = document.getElementById('carrusel-slides');
     if (!contenedor) return;
 
     try {
@@ -1101,8 +1101,13 @@ async function cargarCarrusel() {
         const slides = await response.json();
 
         if (slides.length === 0) {
-            // Fallback por si borran todo del Excel por error
-            contenedor.innerHTML = `<div class="slide active" style="background-color: var(--primary);"><div class="hero-content"><h1>Arvinea Organic</h1></div></div>`;
+            // Fallback preventivo si no hay elementos activos en el Excel
+            contenedorSlides.innerHTML = `
+                <div class="slide active" style="background-image: url('img/hero1.jpg');">
+                    <div class="hero-content">
+                        <h1>Arvinea Organic</h1>
+                    </div>
+                </div>`;
             return; 
         }
 
@@ -1126,16 +1131,19 @@ async function cargarCarrusel() {
             </div>`;
         });
 
-        // Agregamos las flechas al final
-        if (slides.length > 1) {
-            html += `
-                <button class="carousel-prev" onclick="moverSlide(-1)">&#10094;</button>
-                <button class="carousel-next" onclick="moverSlide(1)">&#10095;</button>
-            `;
-        }
-
         contenedor.innerHTML = html;
         slideIndex = 0; // Reiniciamos el contador visual
+        const prevBtn = document.querySelector('.carousel-prev');
+        const nextBtn = document.querySelector('.carousel-next');
+        if (prevBtn && nextBtn) {
+            if (slides.length <= 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
+            }
+        }
 
     } catch (e) { 
         console.error("Error cargando carrusel:", e); 
