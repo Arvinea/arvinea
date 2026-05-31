@@ -946,7 +946,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- MODO CAJERO AUTOMÁTICO ---
+    // --- MODO CAJERO AUTOMÁTICO --- 
     const params = new URLSearchParams(window.location.search);
     if (params.get('modo') === 'caja') {
         console.log("⚡ Modo Cajero Activado");
