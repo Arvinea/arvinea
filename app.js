@@ -1094,7 +1094,7 @@ function formatearTextoDescripcion(texto) {
 
 async function cargarCarrusel() {
     const contenedorSlides = document.getElementById('carrusel-slides');
-    if (!contenedor) return;
+    if (!contenedorSlides) return;
 
     try {
         const response = await fetch(`${SHEET_API}?action=obtenerCarrusel`);
@@ -1131,7 +1131,7 @@ async function cargarCarrusel() {
             </div>`;
         });
 
-        contenedor.innerHTML = html;
+        contenedorSlides.innerHTML = html;
         slideIndex = 0; // Reiniciamos el contador visual
         const prevBtn = document.querySelector('.carousel-prev');
         const nextBtn = document.querySelector('.carousel-next');
