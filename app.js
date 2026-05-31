@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 // 434
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbyoc8E0J_6D-D95O1bjwjZvYXDtz1JGB9bkkfovqHFQRgO6P868y13sSZiX_jBeER_fHA/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbxAx1gPSTi4Kds-OkgkofyBM2CBG0Wcmfa1OJBUbHImO3nZPARKIA18q6DEYJuRPm0jeQ/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -849,6 +849,7 @@ function setEntrega(tipo) {
 let slideIndex = 0;
 function mostrarSlide(n) {
     const slides = document.querySelectorAll('.slide');
+    if (slides.length === 0) return;
     if (n >= slides.length) slideIndex = 0;
     if (n < 0) slideIndex = slides.length - 1;
     slides.forEach(s => s.classList.remove('active'));
@@ -928,6 +929,7 @@ async function cargarConfiguracion() {
 document.addEventListener("DOMContentLoaded", () => {
     cargarProductos();
     cargarTarifas();
+    cargarCarrusel();
     cargarConfiguracion();
     cargarCupones();
     cargarResenas();
@@ -1088,4 +1090,54 @@ function formatearTextoDescripcion(texto) {
     t = t.replace(/\{nota\}(.*?)\{\/nota\}/gi, '<span class="txt-destacado">$1</span>');
 
     return t;
+}
+
+async function cargarCarrusel() {
+    const contenedor = document.getElementById('carrusel-dinamico');
+    if (!contenedor) return;
+
+    try {
+        const response = await fetch(`${SHEET_API}?action=obtenerCarrusel`);
+        const slides = await response.json();
+
+        if (slides.length === 0) {
+            // Fallback por si borran todo del Excel por error
+            contenedor.innerHTML = `<div class="slide active" style="background-color: var(--primary);"><div class="hero-content"><h1>Arvinea Organic</h1></div></div>`;
+            return; 
+        }
+
+        let html = '';
+        slides.forEach((slide, index) => {
+            const activeClass = index === 0 ? 'active' : '';
+            let btnHtml = '';
+            
+            // Si el admin puso texto para el botón, lo creamos
+            if (slide.btnTexto && slide.btnLink) {
+                btnHtml = `<button onclick="${slide.btnLink}">${slide.btnTexto}</button>`;
+            }
+
+            html += `
+            <div class="slide ${activeClass}" style="background-image: url('${slide.imagen}');">
+                <div class="hero-content">
+                    <h1>${slide.titulo}</h1>
+                    <p>${slide.texto}</p>
+                    ${btnHtml}
+                </div>
+            </div>`;
+        });
+
+        // Agregamos las flechas al final
+        if (slides.length > 1) {
+            html += `
+                <button class="carousel-prev" onclick="moverSlide(-1)">&#10094;</button>
+                <button class="carousel-next" onclick="moverSlide(1)">&#10095;</button>
+            `;
+        }
+
+        contenedor.innerHTML = html;
+        slideIndex = 0; // Reiniciamos el contador visual
+
+    } catch (e) { 
+        console.error("Error cargando carrusel:", e); 
+    }
 }

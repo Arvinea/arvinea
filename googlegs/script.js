@@ -384,6 +384,7 @@ function doGet(e) {
   if (action === "obtenerTarifas") return obtenerTarifasJSON();
   if (action === "obtenerConfig") return obtenerConfigJSON();
   if (action === "obtenerCupones") return obtenerCuponesJSON();
+  if (action === "obtenerCarrusel") return obtenerCarruselJSON();
   if (action === "obtenerValoraciones") {
      var sheetVal = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Valoraciones");
      if (!sheetVal) return ContentService.createTextOutput("[]").setMimeType(ContentService.MimeType.JSON);
@@ -744,4 +745,26 @@ function obtenerBarraProgreso(pasoActivo) {
         </table>
       </div>
     `;
+}
+
+function obtenerCarruselJSON() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Carrusel");
+  if (!sheet) return ContentService.createTextOutput("[]").setMimeType(ContentService.MimeType.JSON);
+  
+  var data = sheet.getDataRange().getValues();
+  var slides = [];
+  
+  // Empezamos en i = 1 para saltar los encabezados
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][5]).toUpperCase() === "SI") { // Columna F (Activo)
+      slides.push({
+        imagen: String(data[i][0]),
+        titulo: String(data[i][1]),
+        texto: String(data[i][2]),
+        btnTexto: String(data[i][3]),
+        btnLink: String(data[i][4])
+      });
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify(slides)).setMimeType(ContentService.MimeType.JSON);
 }
