@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 // 434
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbxAx1gPSTi4Kds-OkgkofyBM2CBG0Wcmfa1OJBUbHImO3nZPARKIA18q6DEYJuRPm0jeQ/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbzjUQu6Ho7oY8Car76f0_8G4dKRkTn5Pi2goBEMAZppQNutHuGqUp3Zmm_pFYRuuCo9og/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -221,7 +221,7 @@ function crearTarjetaProducto(p, contenedor) {
 
     let htmlSabor = "";
     if (p.sabor && p.sabor.trim() !== "" && p.sabor.toLowerCase() !== "null") {
-        htmlSabor = `<p class="producto-sabor">Sabor: ${p.sabor}</p>`;
+        htmlSabor = `<p class="producto-sabor"> ${p.sabor}</p>`;
     }
 
     div.innerHTML = `
