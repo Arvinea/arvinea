@@ -13,149 +13,154 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 // 434
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbwXkMFZTJ5vY0S23oPf6mzIQZs4HsAIhfnb6uH10lu2G0qNmOJHpUGM9IHw7CKWwnZ6TA/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbw_Y8-9wq_13XgHdOqeqpN9z1hRm5JlQpC0W5YzNegEBjbCeYI09QO1KPgXkCZ3j9mOxg/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
-async function cargarProductos() {
-    const contenedorPrincipal = document.getElementById('catalogo-dinamico'); // Recuerda cambiar el ID en tu HTML main
-    // SI USAS EL HTML ANTERIOR, EL ID ERA "catalogo", ASEGÚRATE DE QUE COINCIDAN
-    // Para tu caso actual (según el último HTML que mandaste), usaremos "catalogo" y borraremos lo de adentro.
-    const mainCatalogo = document.getElementById('catalogo'); 
-    
-    const barraCategorias = document.getElementById('barra-categorias');
 
-    if(!mainCatalogo || !barraCategorias) return;
+// --- FUNCIONES DE RENDERIZADO INSTANTÁNEO ---
 
-    mainCatalogo.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando catálogo...</div>';
-
-    try {
-        const response = await fetch(`${SHEET_API}?action=obtenerProductos`);
-        const productos = await response.json();
-        
-        inventarioGlobal = productos; 
-        
-        Object.keys(configGlobal).forEach(clave => {
-            if (clave.startsWith("Dscto_")) {
-                const catDescuento = clave.replace("Dscto_", "").trim().toLowerCase();
-                const porcentaje = parseInt(configGlobal[clave]) || 0;
-                
-                if (porcentaje > 0) {
-                    inventarioGlobal.forEach(p => {
-                        const catNombre = p.categoria ? p.categoria.trim().toLowerCase() : '';
-                        
-                        if (catNombre === catDescuento) {
-                            if (!p.precioAntes || p.precioAntes <= p.precio) {
-                                p.precioAntes = p.precio;
-                            }
-                            p.precio = Math.round(p.precioAntes * (1 - porcentaje / 100));
-                        }
-                    });
-                }
-            }
-        });
-
-        // Limpiamos
-        mainCatalogo.innerHTML = ''; 
-        
-        // 1. REINICIAR BARRA DE CATEGORÍAS
-        // Agregamos siempre el botón "Todo" primero
-        barraCategorias.innerHTML = `
-            <button class="btn-cat active" onclick="filtrarSeccion('todos', this)">Todo</button>
-        `;
-
-        // 2. AGRUPAR PRODUCTOS
-        const grupos = {};
-        productos.forEach(p => {
-            if (p.precio > 0 && p.stock > 0) {
-                const catNombre = p.categoria ? p.categoria.trim() : 'Otros';
-                if (!grupos[catNombre]) grupos[catNombre] = [];
-                grupos[catNombre].push(p);
-            }
-        });
-
-        // 3. GENERAR SECCIONES Y BOTONES
-        const categoriasOrdenadas = Object.keys(grupos).sort((a, b) => {
-            // Si dos categorías tienen la misma cantidad de productos, las ordena alfabéticamente
-            if (grupos[b].length === grupos[a].length) {
-                return a.localeCompare(b);
-            }
-            // Ordena poniendo primero la que tiene más productos (de mayor a menor)
-            return grupos[b].length - grupos[a].length;
-        });
-
-        if (categoriasOrdenadas.length === 0) {
-            mainCatalogo.innerHTML = '<p style="text-align:center; padding:20px;">No hay productos disponibles.</p>';
-            return;
+function aplicarConfiguracionVisual() {
+    if (configGlobal.MensajeBarra) {
+        const barra = document.getElementById('promo-bar');
+        if(barra) {
+            document.getElementById('promo-texto').innerText = configGlobal.MensajeBarra;
+            barra.style.display = 'block';
         }
-
-        categoriasOrdenadas.forEach((catNombre) => {
-            // Generar ID único seguro (ej: "Valle Escondido" -> "cat-valle-escondido")
-            const idSeccion = 'cat-' + catNombre.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-
-            // --- A. CREAR BOTÓN EN LA BARRA ---
-            const btn = document.createElement('button');
-            btn.className = 'btn-cat';
-            btn.innerText = catNombre;
-            btn.onclick = () => filtrarSeccion(idSeccion, btn);
-            barraCategorias.appendChild(btn);
-
-            // --- B. CREAR SECCIÓN EN EL MAIN ---
-            const seccionDiv = document.createElement('div');
-            seccionDiv.className = 'seccion-categoria'; // Clase para poder filtrarlas luego
-            seccionDiv.id = idSeccion; // ID para identificarla
-
-            // Título
-            const h2 = document.createElement('h2');
-            h2.className = 'titulo-seccion';
-            h2.innerText = catNombre;
-
-            // Rejilla
-            const grid = document.createElement('div');
-            grid.className = 'grid-productos';
-
-            // Tarjetas
-            grupos[catNombre].forEach(prod => {
-                crearTarjetaProducto(prod, grid);
+    }
+    if (configGlobal.TiendaAbierta && configGlobal.TiendaAbierta.toUpperCase() === "NO") {
+        setTimeout(() => {
+            const botones = document.querySelectorAll('.btn-agregar');
+            botones.forEach(btn => {
+                btn.disabled = true;
+                btn.innerHTML = "Cerrado Temporalmente";
+                btn.style.background = "#95a5a6";
+                btn.style.cursor = "not-allowed";
             });
-
-            // Ensamblar
-            seccionDiv.appendChild(h2);
-            seccionDiv.appendChild(grid);
-            
-            // Separador (HR)
-            const hr = document.createElement('hr');
-            hr.className = 'separador-seccion';
-
-            mainCatalogo.appendChild(seccionDiv);
-            mainCatalogo.appendChild(hr);
-        });
-
-    } catch (error) {
-        console.error("Error cargando inventario:", error);
-        mainCatalogo.innerHTML = '<p style="text-align:center">Hubo un error cargando el catálogo.</p>';
+            alert("⚠️ AVISO: La tienda está en pausa operativa. Puedes ver los productos pero no comprar por el momento.");
+        }, 500);
     }
 }
 
-async function cargarTarifas() {
-    try {
-        const response = await fetch(`${SHEET_API}?action=obtenerTarifas`);
-        tarifasEnvio = await response.json();
-
-        // Llenar el select del HTML
-        const select = document.getElementById('select-region');
-        if(select) {
-            select.innerHTML = '<option value="0">Selecciona tu Región...</option>';
-            tarifasEnvio.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.precio; // El valor es el precio
-                opt.innerText = t.region; // El texto es el nombre
-                select.appendChild(opt);
-            });
-        }
-    } catch (error) {
-        console.error("Error cargando tarifas:", error);
+function renderizarCarrusel(slides) {
+    const contenedorSlides = document.getElementById('carrusel-slides');
+    if (!contenedorSlides) return;
+    if (slides.length === 0) {
+        contenedorSlides.innerHTML = `<div class="slide active" style="background-image: url('img/hero1.jpg');"><div class="hero-content"><h1>Arvinea Organic</h1></div></div>`;
+        return; 
     }
+    let html = '';
+    slides.forEach((slide, index) => {
+        const activeClass = index === 0 ? 'active' : '';
+        let btnHtml = (slide.btnTexto && slide.btnLink) ? `<button onclick="${slide.btnLink}">${slide.btnTexto}</button>` : '';
+        html += `<div class="slide ${activeClass}" style="background-image: url('${slide.imagen}');"><div class="hero-content"><h1>${slide.titulo}</h1><p>${slide.texto}</p>${btnHtml}</div></div>`;
+    });
+    contenedorSlides.innerHTML = html;
+    slideIndex = 0; 
+    const prevBtn = document.querySelector('.carousel-prev');
+    const nextBtn = document.querySelector('.carousel-next');
+    if (prevBtn && nextBtn) {
+        prevBtn.style.display = slides.length <= 1 ? 'none' : 'flex';
+        nextBtn.style.display = slides.length <= 1 ? 'none' : 'flex';
+    }
+}
+
+function renderizarTarifas(tarifas) {
+    tarifasEnvio = tarifas;
+    const select = document.getElementById('select-region');
+    if(select) {
+        select.innerHTML = '<option value="0">Selecciona tu Región...</option>';
+        tarifas.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.precio; opt.innerText = t.region;
+            select.appendChild(opt);
+        });
+    }
+}
+
+function renderizarResenas(resenas) {
+    const contenedor = document.getElementById('contenedor-resenas');
+    if(!contenedor) return;
+    if(resenas.length === 0) {
+        contenedor.innerHTML = '<p>Sé el primero en dejar tu opinión.</p>';
+        return;
+    }
+    contenedor.innerHTML = '';
+    resenas.forEach(r => {
+        const estrellasHTML = '<i class="fas fa-star"></i>'.repeat(r.estrellas);
+        const div = document.createElement('div');
+        div.className = 'card-resena';
+        div.innerHTML = `<div class="estrellas">${estrellasHTML}</div><p>"${r.comentario}"</p><small style="color:#888;">Sobre: ${r.producto}</small><span class="autor-resena">- ${r.nombre}</span>`;
+        contenedor.appendChild(div);
+    });
+}
+
+function renderizarProductos(productos) {
+    const mainCatalogo = document.getElementById('catalogo'); 
+    const barraCategorias = document.getElementById('barra-categorias');
+    if(!mainCatalogo || !barraCategorias) return;
+
+    inventarioGlobal = productos; 
+    
+    // Motor de Descuentos Inteligente
+    Object.keys(configGlobal).forEach(clave => {
+        if (clave.startsWith("Dscto_")) {
+            const catDescuento = clave.replace("Dscto_", "").trim().toLowerCase();
+            const porcentaje = parseInt(configGlobal[clave]) || 0;
+            if (porcentaje > 0) {
+                inventarioGlobal.forEach(p => {
+                    const catNombre = p.categoria ? p.categoria.trim().toLowerCase() : '';
+                    if (catNombre === catDescuento) {
+                        if (!p.precioAntes || p.precioAntes <= p.precio) p.precioAntes = p.precio;
+                        const precioGlobalCalculado = Math.round(p.precioAntes * (1 - porcentaje / 100));
+                        if (precioGlobalCalculado < p.precio) p.precio = precioGlobalCalculado; // Gana el más barato
+                    }
+                });
+            }
+        }
+    });
+
+    mainCatalogo.innerHTML = ''; 
+    barraCategorias.innerHTML = `<button class="btn-cat active" onclick="filtrarSeccion('todos', this)">Todo</button>`;
+
+    const grupos = {};
+    inventarioGlobal.forEach(p => {
+        if (p.precio > 0 && p.stock > 0) {
+            const catNombre = p.categoria ? p.categoria.trim() : 'Otros';
+            if (!grupos[catNombre]) grupos[catNombre] = [];
+            grupos[catNombre].push(p);
+        }
+    });
+
+    const categoriasOrdenadas = Object.keys(grupos).sort((a, b) => {
+        if (grupos[b].length === grupos[a].length) return a.localeCompare(b);
+        return grupos[b].length - grupos[a].length;
+    });
+
+    if (categoriasOrdenadas.length === 0) {
+        mainCatalogo.innerHTML = '<p style="text-align:center; padding:20px;">No hay productos disponibles.</p>';
+        return;
+    }
+
+    categoriasOrdenadas.forEach((catNombre) => {
+        const idSeccion = 'cat-' + catNombre.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        const btn = document.createElement('button');
+        btn.className = 'btn-cat'; btn.innerText = catNombre;
+        btn.onclick = () => filtrarSeccion(idSeccion, btn);
+        barraCategorias.appendChild(btn);
+
+        const seccionDiv = document.createElement('div');
+        seccionDiv.className = 'seccion-categoria'; seccionDiv.id = idSeccion; 
+        
+        const h2 = document.createElement('h2'); h2.className = 'titulo-seccion'; h2.innerText = catNombre;
+        const grid = document.createElement('div'); grid.className = 'grid-productos';
+
+        grupos[catNombre].forEach(prod => crearTarjetaProducto(prod, grid));
+
+        seccionDiv.appendChild(h2); seccionDiv.appendChild(grid);
+        const hr = document.createElement('hr'); hr.className = 'separador-seccion';
+        mainCatalogo.appendChild(seccionDiv); mainCatalogo.appendChild(hr);
+    });
 }
 
 function calcularTotalConEnvio() {
@@ -461,9 +466,56 @@ function filtrarProductos(filtroTexto) {
 }
 
 // Listener para escribir en el buscador
-document.addEventListener("DOMContentLoaded", function() {
-    const inputBuscador = document.getElementById('buscador');
-    if(inputBuscador) inputBuscador.addEventListener('keyup', () => filtrarProductos());
+// INICIALIZADOR MAESTRO (1 Sola Petición)
+document.addEventListener("DOMContentLoaded", async () => {
+    const mainCatalogo = document.getElementById('catalogo');
+    if(mainCatalogo) mainCatalogo.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Conectando con Arvinea...</div>';
+
+    try {
+        // ¡MAGIA! Descargamos TODO en una sola llamada súper rápida
+        const response = await fetch(`${SHEET_API}?action=obtenerTodo`);
+        const data = await response.json();
+
+        // 1. Guardar Globales
+        configGlobal = data.config;
+        listaCupones = data.cupones;
+
+        // 2. Renderizar interfaces (ahora son instantáneas)
+        aplicarConfiguracionVisual();
+        renderizarCarrusel(data.carrusel);
+        renderizarTarifas(data.tarifas);
+        renderizarResenas(data.resenas);
+        renderizarProductos(data.productos); // Ya incluye los descuentos
+
+        // 3. Restaurar Carrito
+        const carritoGuardado = localStorage.getItem('carritoArvinea');
+        if (carritoGuardado) {
+            try {
+                carrito = JSON.parse(carritoGuardado);
+                actualizarCarritoUI(); 
+            } catch (e) { localStorage.removeItem('carritoArvinea'); }
+        }
+
+        // --- MODO CAJERO AUTOMÁTICO --- 
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('modo') === 'caja') {
+            const hero = document.querySelector('.hero-slider'); 
+            const heroCarrusel = document.querySelector('.hero-carousel'); 
+            if(hero) hero.style.display = 'none';
+            if(heroCarrusel) heroCarrusel.style.display = 'none';
+            setTimeout(() => {
+                if(document.getElementById('cliente-nombre')) document.getElementById('cliente-nombre').value = "Venta Presencial";
+                if(document.getElementById('cliente-email')) document.getElementById('cliente-email').value = "caja@arvinea.cl";
+                if(document.getElementById('cliente-telefono')) document.getElementById('cliente-telefono').value = "999999999";
+                if(document.getElementById('cliente-rut')) document.getElementById('cliente-rut').value = "1-9"; 
+            }, 500);
+            codigoAplicado = 'CAJA';
+        }
+
+    } catch (error) {
+        console.error("Error crítico cargando tienda:", error);
+        if(mainCatalogo) mainCatalogo.innerHTML = '<p style="text-align:center">Error de conexión. Por favor, recarga la página.</p>';
+    }
 });
 
 
@@ -923,46 +975,12 @@ function aplicarCupon() {
     }
 }
 
-async function cargarConfiguracion() {
-    try {
-        const response = await fetch(`${SHEET_API}?action=obtenerConfig`);
-        configGlobal = await response.json();
 
-        // 1. Mensaje de la Barra Superior
-        if (configGlobal.MensajeBarra) {
-            const barra = document.getElementById('promo-bar');
-            document.getElementById('promo-texto').innerText = configGlobal.MensajeBarra;
-            barra.style.display = 'block';
-        }
-
-        // 2. MODO TIENDA CERRADA (NUEVO)
-        // Si en Excel pusiste TiendaAbierta = NO
-        if (configGlobal.TiendaAbierta && configGlobal.TiendaAbierta.toUpperCase() === "NO") {
-            // Deshabilitar todos los botones de compra
-            // Usamos un pequeño delay para asegurar que los productos cargaron
-            setTimeout(() => {
-                const botones = document.querySelectorAll('.btn-agregar');
-                botones.forEach(btn => {
-                    btn.disabled = true;
-                    btn.innerHTML = "Cerrado Temporalmente";
-                    btn.style.background = "#95a5a6"; // Gris
-                    btn.style.cursor = "not-allowed";
-                });
-                alert("⚠️ AVISO: La tienda está en pausa operativa. Puedes ver los productos pero no comprar por el momento.");
-            }, 1000);
-        }
-
-    } catch (e) { console.error("Error config:", e); }
-}
 
 // INICIALIZAR
 document.addEventListener("DOMContentLoaded", async () => {
     await cargarConfiguracion();
     await cargarCupones();
-    cargarProductos();
-    cargarTarifas();
-    cargarCarrusel();
-    cargarResenas();
 
     const carritoGuardado = localStorage.getItem('carritoArvinea');
     if (carritoGuardado) {
@@ -1008,32 +1026,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-async function cargarResenas() {
-    try {
-        const response = await fetch(`${SHEET_API}?action=obtenerValoraciones`);
-        const resenas = await response.json();
-        const contenedor = document.getElementById('contenedor-resenas');
-        
-        if(resenas.length === 0) {
-            contenedor.innerHTML = '<p>Sé el primero en dejar tu opinión.</p>';
-            return;
-        }
-        
-        contenedor.innerHTML = '';
-        resenas.forEach(r => {
-            const estrellasHTML = '<i class="fas fa-star"></i>'.repeat(r.estrellas);
-            const div = document.createElement('div');
-            div.className = 'card-resena';
-            div.innerHTML = `
-                <div class="estrellas">${estrellasHTML}</div>
-                <p>"${r.comentario}"</p>
-                <small style="color:#888;">Sobre: ${r.producto}</small>
-                <span class="autor-resena">- ${r.nombre}</span>
-            `;
-            contenedor.appendChild(div);
-        });
-    } catch(e) { console.error("Error reseñas", e); }
-}
+
 
 async function cargarCupones() {
     try {
@@ -1122,60 +1115,3 @@ function formatearTextoDescripcion(texto) {
     return t;
 }
 
-async function cargarCarrusel() {
-    const contenedorSlides = document.getElementById('carrusel-slides');
-    if (!contenedorSlides) return;
-
-    try {
-        const response = await fetch(`${SHEET_API}?action=obtenerCarrusel`);
-        const slides = await response.json();
-
-        if (slides.length === 0) {
-            // Fallback preventivo si no hay elementos activos en el Excel
-            contenedorSlides.innerHTML = `
-                <div class="slide active" style="background-image: url('img/hero1.jpg');">
-                    <div class="hero-content">
-                        <h1>Arvinea Organic</h1>
-                    </div>
-                </div>`;
-            return; 
-        }
-
-        let html = '';
-        slides.forEach((slide, index) => {
-            const activeClass = index === 0 ? 'active' : '';
-            let btnHtml = '';
-            
-            // Si el admin puso texto para el botón, lo creamos
-            if (slide.btnTexto && slide.btnLink) {
-                btnHtml = `<button onclick="${slide.btnLink}">${slide.btnTexto}</button>`;
-            }
-
-            html += `
-            <div class="slide ${activeClass}" style="background-image: url('${slide.imagen}');">
-                <div class="hero-content">
-                    <h1>${slide.titulo}</h1>
-                    <p>${slide.texto}</p>
-                    ${btnHtml}
-                </div>
-            </div>`;
-        });
-
-        contenedorSlides.innerHTML = html;
-        slideIndex = 0; // Reiniciamos el contador visual
-        const prevBtn = document.querySelector('.carousel-prev');
-        const nextBtn = document.querySelector('.carousel-next');
-        if (prevBtn && nextBtn) {
-            if (slides.length <= 1) {
-                prevBtn.style.display = 'none';
-                nextBtn.style.display = 'none';
-            } else {
-                prevBtn.style.display = 'flex';
-                nextBtn.style.display = 'flex';
-            }
-        }
-
-    } catch (e) { 
-        console.error("Error cargando carrusel:", e); 
-    }
-}
