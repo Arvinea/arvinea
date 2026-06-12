@@ -863,20 +863,16 @@ async function procesarPedidoFinal() {
         localStorage.setItem('ultimo_pedido_id', respuestaJson.idPedido);
         localStorage.setItem('ultimo_pedido_total', totalCalculado);
 
-        const linkAprobar = `${SHEET_API}?action=aprobar&id=${respuestaJson.idPedido}`;
-        document.getElementById('real-cliente').value = nombre;
-        document.getElementById('real-id').value = respuestaJson.idPedido;
-        document.getElementById('real-telefono').value = "Tlf: " + telefono;
-        document.getElementById('real-direccion').value = ubicacionFinal;
-        document.getElementById('real-pedido').value = pedidoTexto;
-        document.getElementById('real-total').value = totalCalculado;
-        if(document.getElementById('real-email')) document.getElementById('real-email').value = email;
-        if(document.getElementById('real-link-gestion')) document.getElementById('real-link-gestion').value = linkAprobar;
-        localStorage.removeItem('carritoArvinea'); // Borra la memoria
-        carrito = []; // Vacía la lista
-        actualizarCarritoUI(); // Actualiza visualmente a 0
+        localStorage.removeItem('carritoArvinea'); 
+        carrito = []; 
+        actualizarCarritoUI();
+
         window.location.href = "gracias.html";
 
+        const linkAprobar = `${SHEET_API}?action=aprobar&id=${respuestaJson.idPedido}`;
+
+        if(document.getElementById('real-email')) document.getElementById('real-email').value = email;
+        if(document.getElementById('real-link-gestion')) document.getElementById('real-link-gestion').value = linkAprobar;
     } catch (error) {
         console.error('Error:', error);
         alert('Error de conexión.');
@@ -935,23 +931,22 @@ function aplicarCupon() {
     const mensaje = document.getElementById('msg-cupon');
     const codigoUser = input.value.toUpperCase().trim();
     
-    if (cuponEncontrado.maxUsos && cuponEncontrado.usados >= cuponEncontrado.maxUsos) {
+    // 1. PRIMERO buscamos el cupón en la memoria
+    const cuponEncontrado = listaCupones.find(c => c.codigo === codigoUser);
+
+    if (cuponEncontrado) {
+        // 2. LUEGO validamos si excedió el límite
+        if (cuponEncontrado.maxUsos && cuponEncontrado.usados >= cuponEncontrado.maxUsos) {
             descuentoCupón = 0;
             codigoAplicado = "";
             mensaje.style.color = "red";
             mensaje.innerText = "Este cupón ha agotado su límite de usos.";
             irAPago();
             return;
-    }
+        }
 
-
-    // Buscamos si existe
-    const cuponEncontrado = listaCupones.find(c => c.codigo === codigoUser);
-
-    if (cuponEncontrado) {
+        // Si pasa la validación, aplicamos el descuento
         codigoAplicado = cuponEncontrado.codigo;
-        
-        // Calculamos el descuento basado en el subtotal actual
         let subtotal = 0;
         carrito.forEach(i => subtotal += (i.precioBase * i.cantidad));
 
@@ -963,70 +958,16 @@ function aplicarCupon() {
 
         mensaje.style.color = "#27ae60";
         mensaje.innerText = `¡Cupón ${codigoUser} aplicado! Ahorras $${descuentoCupón.toLocaleString('es-CL')}`;
-        
-        // Recargamos la vista de pago para que se actualicen los números
         irAPago(); 
+
     } else {
         descuentoCupón = 0;
         codigoAplicado = "";
         mensaje.style.color = "red";
         mensaje.innerText = "Cupón inválido o expirado.";
-        irAPago(); // Recargamos para borrar cualquier descuento previo
+        irAPago();
     }
 }
-
-
-
-// INICIALIZAR
-document.addEventListener("DOMContentLoaded", async () => {
-    await cargarConfiguracion();
-    await cargarCupones();
-
-    const carritoGuardado = localStorage.getItem('carritoArvinea');
-    if (carritoGuardado) {
-        try {
-            carrito = JSON.parse(carritoGuardado);
-            actualizarCarritoUI(); // Esto redibuja el carrito guardado automáticamente
-        } catch (e) {
-            console.error("Error recuperando carrito", e);
-            localStorage.removeItem('carritoArvinea'); // Si falla, limpiamos
-        }
-    }
-
-    // --- MODO CAJERO AUTOMÁTICO --- 
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('modo') === 'caja') {
-        console.log("⚡ Modo Cajero Activado");
-
-        // A. Ocultar distracciones
-        const hero = document.querySelector('.hero-slider'); 
-        const heroCarrusel = document.querySelector('.hero-carousel'); // Añadida validación
-        if(hero) hero.style.display = 'none';
-        if(heroCarrusel) heroCarrusel.style.display = 'none';
-        // B. Pre-llenar datos del cliente (Con RUT y espera segura)
-        setTimeout(() => {
-            const inputNombre = document.getElementById('cliente-nombre');
-            const inputEmail = document.getElementById('cliente-email');
-            const inputFono = document.getElementById('cliente-telefono');
-            const inputRut = document.getElementById('cliente-rut'); // Rut
-            
-            if(inputNombre) inputNombre.value = "Venta Presencial";
-            if(inputEmail) inputEmail.value = "caja@arvinea.cl";
-            if(inputFono) inputFono.value = "999999999";
-            if(inputRut) inputRut.value = "1-9"; // Rut genérico válido
-        }, 500);
-
-        // C. AUTO-APLICAR CUPÓN (LA SOLUCIÓN)
-        // No buscamos el input visual. Fijamos la variable en memoria directamente.
-        // Así, cuando llegues al paso de Pago, el sistema ya sabrá que hay cupón.
-        codigoAplicado = 'CAJA';
-        
-        // (Opcional) Feedback para ti
-        alert("⚡ MODO CAJERO LISTO ⚡");
-    }
-});
-
-
 
 async function cargarCupones() {
     try {
