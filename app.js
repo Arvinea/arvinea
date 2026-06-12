@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 // 434
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbybJQf7-pSPYSbNIC978cZKjuIe5PjzFadzY81ZmhiKFoHKsqNUvsh8Tcz-9DzoE8UqJw/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbzbFpuIp8Aj3zMBlr1xP3fN3ib2UFikKOEWMgpihiZhU8tRGM9H3RqlKmr6zYJO6nKGxQ/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -836,7 +836,13 @@ async function procesarPedidoFinal() {
         ubicacionFinal = `${regionNombre} - ${ubicacionFinal}`;
     }
 
-    const pedidoTexto = carrito.map(item => `${item.cantidad}x ${item.nombre}`).join(', ');
+    const pedidoTexto = carrito.map(item => {
+        let linea = `${item.cantidad}x ${item.nombre}`;
+        if (item.obs && item.obs.trim() !== "") {
+            linea += `\n   ↳ 📌 NOTA: ${item.obs.trim()}`;
+        }
+        return linea;
+    }).join('\n\n');
 
     const btn = document.getElementById('btn-enviar-final');
     const textoOriginal = btn.innerHTML;
@@ -928,8 +934,8 @@ setInterval(() => { moverSlide(1); }, 5000);
 
 function aplicarCupon() {
     const input = document.getElementById('input-cupon');
-    const mensaje = document.getElementById('msg-cupon');
     const codigoUser = input.value.toUpperCase().trim();
+
     
     // 1. PRIMERO buscamos el cupón en la memoria
     const cuponEncontrado = listaCupones.find(c => c.codigo === codigoUser);
@@ -937,11 +943,11 @@ function aplicarCupon() {
     if (cuponEncontrado) {
         // 2. LUEGO validamos si excedió el límite
         if (cuponEncontrado.maxUsos && cuponEncontrado.usados >= cuponEncontrado.maxUsos) {
-            descuentoCupón = 0;
             codigoAplicado = "";
-            mensaje.style.color = "red";
-            mensaje.innerText = "Este cupón ha agotado su límite de usos.";
+            descuentoCupón = 0;
             irAPago();
+            const msg = document.getElementById('msg-cupon');
+            if(msg) { msg.style.color = "red"; msg.innerHTML = "❌ Este cupón ha agotado su límite de usos."; }
             return;
         }
 
@@ -956,16 +962,20 @@ function aplicarCupon() {
             descuentoCupón = cuponEncontrado.valor;
         }
 
-        mensaje.style.color = "#27ae60";
-        mensaje.innerText = `¡Cupón ${codigoUser} aplicado! Ahorras $${descuentoCupón.toLocaleString('es-CL')}`;
-        irAPago(); 
-
+        irAPago(); // Redibujamos CON descuento
+        
+        // Inyectamos el éxito
+        const msg = document.getElementById('msg-cupon');
+        if(msg) { msg.style.color = "#27ae60"; msg.innerHTML = `✅ ¡Cupón ${codigoUser} aplicado! Ahorras $${descuentoCupón.toLocaleString('es-CL')}`; }
+        
     } else {
-        descuentoCupón = 0;
+        // 4. Si escriben cualquier cosa inválida
         codigoAplicado = "";
-        mensaje.style.color = "red";
-        mensaje.innerText = "Cupón inválido o expirado.";
-        irAPago();
+        descuentoCupón = 0;
+        irAPago(); 
+        
+        const msg = document.getElementById('msg-cupon');
+        if(msg) { msg.style.color = "red"; msg.innerHTML = "❌ Cupón inválido o expirado."; }
     }
 }
 
