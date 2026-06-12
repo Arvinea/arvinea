@@ -37,7 +37,6 @@ async function cargarProductos() {
         
         Object.keys(configGlobal).forEach(clave => {
             if (clave.startsWith("Dscto_")) {
-                // Extraemos el nombre de la categoría quitando el prefijo "Dscto_"
                 const catDescuento = clave.replace("Dscto_", "").trim().toLowerCase();
                 const porcentaje = parseInt(configGlobal[clave]) || 0;
                 
@@ -45,13 +44,10 @@ async function cargarProductos() {
                     inventarioGlobal.forEach(p => {
                         const catNombre = p.categoria ? p.categoria.trim().toLowerCase() : '';
                         
-                        // Si la categoría del producto coincide con la de la regla de descuento
                         if (catNombre === catDescuento) {
-                            // Resguardamos el precio base original si no tiene oferta previa
                             if (!p.precioAntes || p.precioAntes <= p.precio) {
                                 p.precioAntes = p.precio;
                             }
-                            // Calculamos la rebaja siempre basándonos en el precio original
                             p.precio = Math.round(p.precioAntes * (1 - porcentaje / 100));
                         }
                     });
@@ -961,13 +957,12 @@ async function cargarConfiguracion() {
 
 // INICIALIZAR
 document.addEventListener("DOMContentLoaded", async () => {
+    await cargarConfiguracion();
+    await cargarCupones();
     cargarProductos();
     cargarTarifas();
     cargarCarrusel();
-    await cargarConfiguracion();
-    await cargarCupones();
     cargarResenas();
-
 
     const carritoGuardado = localStorage.getItem('carritoArvinea');
     if (carritoGuardado) {
@@ -987,6 +982,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // A. Ocultar distracciones
         const hero = document.querySelector('.hero-slider'); 
+        const heroCarrusel = document.querySelector('.hero-carousel'); // Añadida validación
         if(hero) hero.style.display = 'none';
         if(heroCarrusel) heroCarrusel.style.display = 'none';
         // B. Pre-llenar datos del cliente (Con RUT y espera segura)
