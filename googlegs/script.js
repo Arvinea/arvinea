@@ -106,8 +106,10 @@ function doPost(e) {
     var nuevaFila = sheetPedidos.appendRow([
       idPedido, new Date(), data.cliente, data.email, data.telefono, 
       data.rut, data.ubicacion, data.entrega, data.pedido, data.total, 
-      estadoInicial, jsonItems 
+      estadoInicial, jsonItems, data.cupon || ""
     ]);
+
+    if (esVentaCaja && data.cupon) {incrementarUsoCupon(data.cupon);}
 
     // E. ACCIONES VENTA CAJA
     if (esVentaCaja) {
@@ -142,7 +144,7 @@ function doPost(e) {
             <span style="font-size: 1.2rem; font-weight: bold;">${idPedido}</span>
           </div>
       `;
-
+      var linkAprobar = ScriptApp.getService().getUrl() + "?action=aprobar&id=" + idPedido;
       var cuerpoInstrucciones = crearPlantillaEmail("Confirma tu Pedido", htmlInstrucciones, "pago");
 
       MailApp.sendEmail({
@@ -155,11 +157,39 @@ function doPost(e) {
         to: EMAIL_FELIPE,
         subject: "🚨 ¡Nuevo Pedido Registrado! " + idPedido,
         htmlBody: `
-          <h3>Un cliente acaba de hacer un pedido.</h3>
-          <p><strong>Cliente:</strong> ${data.cliente}</p>
-          <p><strong>Monto total:</strong> $${parseInt(data.total).toLocaleString('es-CL')}</p>
-          <p><strong>Productos:</strong> ${data.pedido}</p>
-          <p><em>Revisa tu cuenta de Mercado Pago para verificar la transferencia con el ID: ${idPedido}</em></p>
+          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 8px;">
+            <h3 style="color: #2d4f1e; border-bottom: 2px solid #2d4f1e; padding-bottom: 10px;">🚨 ¡Nuevo Pedido Registrado!</h3>
+            <p>Un cliente acaba de realizar un pedido en la tienda web.</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+              <tr>
+                <td style="padding: 8px; font-weight: bold; background: #f9f9f9; width: 30%;">ID Pedido:</td>
+                <td style="padding: 8px; background: #f9f9f9; color: #2d4f1e; font-weight: bold;">${idPedido}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; font-weight: bold;">Cliente:</td>
+                <td style="padding: 8px;">${data.cliente}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; font-weight: bold; background: #f9f9f9;">Monto Total:</td>
+                <td style="padding: 8px; background: #f9f9f9; font-weight: bold; color: #b8860b;">$${parseInt(data.total).toLocaleString('es-CL')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; font-weight: bold;">Productos:</td>
+                <td style="padding: 8px;">${data.pedido}</td>
+              </tr>
+            </table>
+            
+            <div style="margin: 25px 0; text-align: center;">
+              <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Si ya verificaste la transferencia en Mercado Pago, puedes aprobar el despacho haciendo clic aquí:</p>
+              <a href="${linkAprobar}" target="_blank" style="background-color: #2d4f1e; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 1rem; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                Aprobar Pedido Directamente ✅
+              </a>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #eee; margin-top: 20px;">
+            <p style="font-size: 0.8rem; color: #999; text-align: center;">Arvinea Organic - Sistema de Gestión Automática</p>
+          </div>
         `
       });
     }
@@ -287,6 +317,12 @@ function validarYAprobar(idBuscado, montoRecibido, sheetPedidos, dataPedidos, me
       
       descontarStockReal(filaEncontrada, sheetPedidos); 
       
+      var cuponUsado = dataPedidos[filaEncontrada - 1][12]; // Columna 13 (índice 12)
+      if (cuponUsado && cuponUsado !== "") {
+          incrementarUsoCupon(cuponUsado);
+      }
+
+
       celdaEstado.setValue("Pagado"); 
       celdaEstado.setBackground("#b6d7a8"); 
       
@@ -497,7 +533,13 @@ function obtenerCuponesJSON() {
   var cupones = [];
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][3]).toUpperCase() === "SI") {
-      cupones.push({ codigo: String(data[i][0]).toUpperCase().trim(), tipo: String(data[i][1]).toUpperCase(), valor: parseInt(data[i][2]) || 0 });
+      cupones.push({ 
+        codigo: String(data[i][0]).toUpperCase().trim(), 
+        tipo: String(data[i][1]).toUpperCase(), 
+        valor: parseInt(data[i][2]) || 0,
+        maxUsos: parseInt(data[i][4]) || 9999, // Columna E (Índice 4)
+        usados: parseInt(data[i][5]) || 0      // Columna F (Índice 5)
+      });
     }
   }
   return ContentService.createTextOutput(JSON.stringify(cupones)).setMimeType(ContentService.MimeType.JSON);
@@ -767,4 +809,22 @@ function obtenerCarruselJSON() {
     }
   }
   return ContentService.createTextOutput(JSON.stringify(slides)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function incrementarUsoCupon(codigo) {
+  try {
+    var doc = SpreadsheetApp.getActiveSpreadsheet();
+    var sheetCupones = doc.getSheetByName("Cupones");
+    if (!sheetCupones) return;
+    var data = sheetCupones.getDataRange().getValues();
+    
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim().toUpperCase() === String(codigo).trim().toUpperCase()) {
+        var celdaUsados = sheetCupones.getRange(i + 1, 6); // Columna F
+        var usosActuales = parseInt(data[i][5]) || 0;
+        celdaUsados.setValue(usosActuales + 1);
+        break;
+      }
+    }
+  } catch (e) { console.error("Error al incrementar cupón: " + e.toString()); }
 }

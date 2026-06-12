@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 // 434
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbyVA4y0mL1qDi6XlKvDYLJAa1mvk-wHqaHrvXiKBdRUy9EXE_KfNAnFGvKSLRR-s1GeGQ/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbwXkMFZTJ5vY0S23oPf6mzIQZs4HsAIhfnb6uH10lu2G0qNmOJHpUGM9IHw7CKWwnZ6TA/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -35,6 +35,30 @@ async function cargarProductos() {
         
         inventarioGlobal = productos; 
         
+        Object.keys(configGlobal).forEach(clave => {
+            if (clave.startsWith("Dscto_")) {
+                // Extraemos el nombre de la categoría quitando el prefijo "Dscto_"
+                const catDescuento = clave.replace("Dscto_", "").trim().toLowerCase();
+                const porcentaje = parseInt(configGlobal[clave]) || 0;
+                
+                if (porcentaje > 0) {
+                    inventarioGlobal.forEach(p => {
+                        const catNombre = p.categoria ? p.categoria.trim().toLowerCase() : '';
+                        
+                        // Si la categoría del producto coincide con la de la regla de descuento
+                        if (catNombre === catDescuento) {
+                            // Resguardamos el precio base original si no tiene oferta previa
+                            if (!p.precioAntes || p.precioAntes <= p.precio) {
+                                p.precioAntes = p.precio;
+                            }
+                            // Calculamos la rebaja siempre basándonos en el precio original
+                            p.precio = Math.round(p.precioAntes * (1 - porcentaje / 100));
+                        }
+                    });
+                }
+            }
+        });
+
         // Limpiamos
         mainCatalogo.innerHTML = ''; 
         
@@ -863,6 +887,16 @@ function aplicarCupon() {
     const mensaje = document.getElementById('msg-cupon');
     const codigoUser = input.value.toUpperCase().trim();
     
+    if (cuponEncontrado.maxUsos && cuponEncontrado.usados >= cuponEncontrado.maxUsos) {
+            descuentoCupón = 0;
+            codigoAplicado = "";
+            mensaje.style.color = "red";
+            mensaje.innerText = "Este cupón ha agotado su límite de usos.";
+            irAPago();
+            return;
+    }
+
+
     // Buscamos si existe
     const cuponEncontrado = listaCupones.find(c => c.codigo === codigoUser);
 
@@ -926,12 +960,12 @@ async function cargarConfiguracion() {
 }
 
 // INICIALIZAR
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     cargarProductos();
     cargarTarifas();
     cargarCarrusel();
-    cargarConfiguracion();
-    cargarCupones();
+    await cargarConfiguracion();
+    await cargarCupones();
     cargarResenas();
 
 
@@ -954,7 +988,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // A. Ocultar distracciones
         const hero = document.querySelector('.hero-slider'); 
         if(hero) hero.style.display = 'none';
-
+        if(heroCarrusel) heroCarrusel.style.display = 'none';
         // B. Pre-llenar datos del cliente (Con RUT y espera segura)
         setTimeout(() => {
             const inputNombre = document.getElementById('cliente-nombre');
