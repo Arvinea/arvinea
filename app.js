@@ -13,7 +13,7 @@ const STOCK_SEGURIDAD = 1; // El cliente ve 1 unidad menos de la real
 let codigoAplicado = ""; // Para saber qué cupón usó
 // 434
 // URL de Sheet (API)
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbzbFpuIp8Aj3zMBlr1xP3fN3ib2UFikKOEWMgpihiZhU8tRGM9H3RqlKmr6zYJO6nKGxQ/exec';
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbxxaiWQBodMqjjJR8fxjBU9dLl7PqoswFfPcX91hX-T-E245B0jPT1GTOR6bxA41mKKCA/exec';
 
 
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
@@ -613,10 +613,23 @@ function actualizarCarritoUI() {
     });
 
     const totalTexto = '$' + total.toLocaleString('es-CL');
-    document.getElementById('float-count').innerText = carrito.length;
+    const totalCantidad = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+
+    const floatCount = document.getElementById('float-count');
+    if (floatCount) floatCount.innerText = totalCantidad;
+
+    const floatCountHeader = document.getElementById('float-count-header');
+    if (floatCountHeader) floatCountHeader.innerText = totalCantidad;
+
     document.getElementById('float-total').innerText = totalTexto;
     const btnFlotante = document.getElementById('btn-flotante-carrito');
-    if (carrito.length > 0) btnFlotante.style.display = 'flex';
+    if (btnFlotante) {
+        if (carrito.length > 0) {
+            btnFlotante.style.display = 'flex';
+        } else {
+            btnFlotante.style.display = 'none';
+        }
+    }
     document.getElementById('sidebar-total').innerText = totalTexto;
     localStorage.setItem('carritoArvinea', JSON.stringify(carrito));
 }

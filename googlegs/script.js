@@ -106,7 +106,7 @@ function doPost(e) {
     var nuevaFila = sheetPedidos.appendRow([
       idPedido, new Date(), data.cliente, data.email, data.telefono, 
       data.rut, data.ubicacion, data.entrega, data.pedido, data.total, 
-      estadoInicial, jsonItems, data.cupon || ""
+      estadoInicial, jsonItems, "", data.cupon || "" 
     ]);
 
     if (esVentaCaja && data.cupon) {incrementarUsoCupon(data.cupon);}
@@ -153,6 +153,10 @@ function doPost(e) {
         htmlBody: cuerpoInstrucciones
       });
 
+      var productosParaEmail = String(data.pedido)
+            .replace(/\n/g, '<br>')
+            .replace(/↳ 📌 NOTA:/g, '<span style="background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;">↳ 📌 NOTA:</span>');
+
       MailApp.sendEmail({
         to: EMAIL_FELIPE,
         subject: "🚨 ¡Nuevo Pedido Registrado! " + idPedido,
@@ -163,31 +167,32 @@ function doPost(e) {
             
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
               <tr>
-                <td style="padding: 8px; font-weight: bold; background: #f9f9f9; width: 30%;">ID Pedido:</td>
-                <td style="padding: 8px; background: #f9f9f9; color: #2d4f1e; font-weight: bold;">${idPedido}</td>
+                <td style="padding: 10px; font-weight: bold; background: #f9f9f9; width: 30%; border-bottom: 1px solid #eee;">ID Pedido:</td>
+                <td style="padding: 10px; background: #f9f9f9; color: #2d4f1e; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid #eee;">${idPedido}</td>
               </tr>
               <tr>
-                <td style="padding: 8px; font-weight: bold;">Cliente:</td>
-                <td style="padding: 8px;">${data.cliente}</td>
+                <td style="padding: 10px; font-weight: bold; border-bottom: 1px solid #eee;">Cliente:</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">${data.cliente} <br><span style="font-size:0.85rem; color:#666;">${data.telefono}</span></td>
               </tr>
               <tr>
-                <td style="padding: 8px; font-weight: bold; background: #f9f9f9;">Monto Total:</td>
-                <td style="padding: 8px; background: #f9f9f9; font-weight: bold; color: #b8860b;">$${parseInt(data.total).toLocaleString('es-CL')}</td>
+                <td style="padding: 10px; font-weight: bold; background: #f9f9f9; border-bottom: 1px solid #eee;">Monto Total:</td>
+                <td style="padding: 10px; background: #f9f9f9; font-weight: bold; color: #b8860b; font-size: 1.1rem; border-bottom: 1px solid #eee;">$${parseInt(data.total).toLocaleString('es-CL')}</td>
               </tr>
               <tr>
-                <td style="padding: 8px; font-weight: bold;">Productos:</td>
-                <td style="padding: 8px;">${data.pedido}</td>
+                <td style="padding: 10px; font-weight: bold; vertical-align: top;">Productos:</td>
+                <td style="padding: 10px; line-height: 1.6; color: #111;">
+                    ${productosParaEmail}
+                </td>
               </tr>
             </table>
             
-            <div style="margin: 25px 0; text-align: center;">
-              <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Si ya verificaste la transferencia en Mercado Pago, puedes aprobar el despacho haciendo clic aquí:</p>
-              <a href="${linkAprobar}" target="_blank" style="background-color: #2d4f1e; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 1rem; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                Aprobar Pedido Directamente ✅
+            <div style="margin: 25px 0; text-align: center; background-color: #f0fdf4; padding: 20px; border-radius: 8px; border: 1px dashed #2d4f1e;">
+              <p style="font-size: 0.95rem; color: #166534; margin-bottom: 15px; font-weight: bold;">¿Verificaste el pago en el banco?</p>
+              <a href="${linkAprobar}" target="_blank" style="background-color: #2d4f1e; color: white; padding: 14px 28px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 1.05rem; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                Aprobar y Descontar Stock ✅
               </a>
             </div>
             
-            <hr style="border: 0; border-top: 1px solid #eee; margin-top: 20px;">
             <p style="font-size: 0.8rem; color: #999; text-align: center;">Arvinea Organic - Sistema de Gestión Automática</p>
           </div>
         `
@@ -317,7 +322,7 @@ function validarYAprobar(idBuscado, montoRecibido, sheetPedidos, dataPedidos, me
       
       descontarStockReal(filaEncontrada, sheetPedidos); 
       
-      var cuponUsado = dataPedidos[filaEncontrada - 1][12]; // Columna 13 (índice 12)
+      var cuponUsado = dataPedidos[filaEncontrada - 1][13]; // Columna 13 (índice 12)
       if (cuponUsado && cuponUsado !== "") {
           incrementarUsoCupon(cuponUsado);
       }
@@ -441,6 +446,7 @@ function doGet(e) {
      }
      return ContentService.createTextOutput(JSON.stringify(resenas)).setMimeType(ContentService.MimeType.JSON);
   }
+  if (action === "obtenerTodo") return obtenerTodoJSON();
   var idTarget = e.parameter.id;
   if (action === "aprobar" && idTarget) {
     var doc = SpreadsheetApp.getActiveSpreadsheet();
@@ -494,7 +500,7 @@ function obtenerInventarioJSON() {
       nombre: nombreP, sabor: saborP, stock: stockFinal, precio: parseInt(dataInv[i][3]) || 0, // ANTES 2, AHORA 3
       categoria: String(dataInv[i][4]), imagen: String(dataInv[i][5]), // ANTES 3 y 4, AHORA 4 y 5
       descripcion: String(dataInv[i][6]), nutricion: String(dataInv[i][7]), // ANTES 5 y 6, AHORA 6 y 7
-      precioAntes: parseInt(dataInv[i][8]) || 0, promo: String(dataInv[i][9]).toUpperCase().trim() // ANTES 7 y 8, AHORA 8 y 9
+      precioAntes: parseInt(dataInv[i][8]) || 0, promo: String(dataInv[i][10]).toUpperCase().trim() // Corregido: Columna K (índice 10)
     });
   }
   return ContentService.createTextOutput(JSON.stringify(productos)).setMimeType(ContentService.MimeType.JSON);
@@ -827,4 +833,101 @@ function incrementarUsoCupon(codigo) {
       }
     }
   } catch (e) { console.error("Error al incrementar cupón: " + e.toString()); }
+}
+
+function obtenerTodoJSON() {
+  var doc = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. Configuración
+  var sheetConfig = doc.getSheetByName("Configuracion");
+  var config = {};
+  if (sheetConfig) {
+    var dataC = sheetConfig.getDataRange().getValues();
+    for (var i = 1; i < dataC.length; i++) {
+      if (String(dataC[i][2]).toUpperCase() === "SI") config[String(dataC[i][0])] = dataC[i][1];
+    }
+  }
+
+  // 2. Cupones
+  var sheetCupones = doc.getSheetByName("Cupones");
+  var cupones = [];
+  if (sheetCupones) {
+    var dataCup = sheetCupones.getDataRange().getValues();
+    for (var i = 1; i < dataCup.length; i++) {
+      if (String(dataCup[i][3]).toUpperCase() === "SI") {
+        cupones.push({ codigo: String(dataCup[i][0]).toUpperCase().trim(), tipo: String(dataCup[i][1]).toUpperCase(), valor: parseInt(dataCup[i][2])||0, maxUsos: parseInt(dataCup[i][4])||9999, usados: parseInt(dataCup[i][5])||0 });
+      }
+    }
+  }
+
+  // 3. Tarifas
+  var sheetTarifas = doc.getSheetByName("Tarifas");
+  var tarifas = [];
+  if (sheetTarifas) {
+     var dataT = sheetTarifas.getDataRange().getValues();
+     for (var i = 1; i < dataT.length; i++) {
+       if(dataT[i][0] !== "") tarifas.push({ region: String(dataT[i][0]), precio: parseInt(dataT[i][1]) || 0 });
+     }
+  }
+
+  // 4. Carrusel
+  var sheetCarrusel = doc.getSheetByName("Carrusel");
+  var slides = [];
+  if (sheetCarrusel) {
+     var dataCar = sheetCarrusel.getDataRange().getValues();
+     for (var i = 1; i < dataCar.length; i++) {
+       if (String(dataCar[i][5]).toUpperCase() === "SI") {
+         slides.push({ imagen: String(dataCar[i][0]), titulo: String(dataCar[i][1]), texto: String(dataCar[i][2]), btnTexto: String(dataCar[i][3]), btnLink: String(dataCar[i][4]) });
+       }
+     }
+  }
+
+  // 5. Reseñas
+  var sheetVal = doc.getSheetByName("Valoraciones");
+  var resenas = [];
+  if (sheetVal) {
+     var dataV = sheetVal.getDataRange().getValues();
+     var contador = 0;
+     for(var i = dataV.length - 1; i >= 1; i--) {
+        if (contador >= 20) break;
+        if(parseInt(dataV[i][3]) >= 4) {
+           resenas.push({ nombre: dataV[i][1], producto: dataV[i][2], estrellas: parseInt(dataV[i][3]), comentario: dataV[i][4] });
+           contador++;
+        }
+     }
+  }
+
+  // 6. Inventario (Con cálculo de reservas integrado)
+  var sheetInv = doc.getSheetByName("Inventario");
+  var sheetRes = doc.getSheetByName("Reservas");
+  var dataInv = sheetInv ? sheetInv.getDataRange().getValues() : [];
+  var dataRes = sheetRes ? sheetRes.getDataRange().getValues() : [];
+  var ahora = Date.now();
+  var reservasMap = {};
+  for (var r = 1; r < dataRes.length; r++) {
+     var tiempo = new Date(dataRes[r][2]).getTime();
+     if (ahora - tiempo < (10 * 60 * 1000)) {
+        var prod = String(dataRes[r][0]);
+        var cant = parseInt(dataRes[r][1]);
+        if (!reservasMap[prod]) reservasMap[prod] = 0;
+        reservasMap[prod] += cant;
+     }
+  }
+  var productos = [];
+  for (var i = 1; i < dataInv.length; i++) {
+    if(dataInv[i][0] === "") continue;
+    var nombreP = String(dataInv[i][0]);
+    var stockFinal = (parseInt(dataInv[i][2]) || 0) - (reservasMap[nombreP] || 0);
+    if (stockFinal < 0) stockFinal = 0;
+    productos.push({
+      nombre: nombreP, sabor: String(dataInv[i][1]), stock: stockFinal, precio: parseInt(dataInv[i][3]) || 0,
+      categoria: String(dataInv[i][4]), imagen: String(dataInv[i][5]), descripcion: String(dataInv[i][6]), 
+      nutricion: String(dataInv[i][7]), precioAntes: parseInt(dataInv[i][8]) || 0, promo: String(dataInv[i][10]).toUpperCase().trim() // Corregido: Columna K (índice 10)
+    });
+  }
+
+  // 7. Empaquetar todo y enviarlo de golpe
+  return ContentService.createTextOutput(JSON.stringify({
+    config: config, cupones: cupones, tarifas: tarifas, carrusel: slides, resenas: resenas, productos: productos
+  })).setMimeType(ContentService.MimeType.JSON);
 }
