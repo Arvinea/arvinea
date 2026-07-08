@@ -5,6 +5,7 @@
 // --- CONFIGURACIÓN ---
 const EMAIL_FELIPE = "arvinea.organic@gmail.com"; 
 const STOCK_SEGURIDAD = 1; 
+const API_TOKEN = "ARV_SECURE_TOKEN_2026"; // Token de seguridad para aprobación manual
 
 // --- CONFIGURACIÓN BANCOS ---
 const REMITENTE_BE = "noreply@correo.bancoestado.cl"; 
@@ -144,7 +145,7 @@ function doPost(e) {
             <span style="font-size: 1.2rem; font-weight: bold;">${idPedido}</span>
           </div>
       `;
-      var linkAprobar = ScriptApp.getService().getUrl() + "?action=aprobar&id=" + idPedido;
+      var linkAprobar = ScriptApp.getService().getUrl() + "?action=aprobar&id=" + idPedido + "&token=" + API_TOKEN;
       var cuerpoInstrucciones = crearPlantillaEmail("Confirma tu Pedido", htmlInstrucciones, "pago");
 
       MailApp.sendEmail({
@@ -208,65 +209,9 @@ function doPost(e) {
   }
 }
 
-// --- 4. ROBOT MULTIBANCO (El Cerebro) ---
-function verificarPagosBancarios() {
-  var doc = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = doc.getSheetByName("Pedidos") || doc.getSheets()[0];
-  var data = sheet.getDataRange().getValues();
-
-  console.log("🤖 Iniciando escaneo de bancos...");
-
-  // 1. BancoEstado
-  procesarCorreos('from:' + REMITENTE_BE + ' subject:"' + ASUNTO_BE + '" is:unread', sheet, data, "BancoEstado");
-  
-  // 2. MercadoPago
-  procesarCorreos('from:mercadopago.cl subject:"' + KEYWORD_MP + '" is:unread', sheet, data, "MercadoPago");
-  
-  // 3. Banco de Chile
-  procesarCorreos('from:' + REMITENTE_BCH + ' subject:"' + ASUNTO_BCH + '" is:unread', sheet, data, "BancoChile");
-
-  // 4. Manual (Cliente envía comprobante con "ARV" en el asunto)
-  procesarCorreos('subject:"ARV" is:unread', sheet, data, "Manual Cliente");
-}
-
-function procesarCorreos(query, sheet, data, origenNombre) {
-  var hilos = GmailApp.search(query);
-  if (hilos.length === 0) return;
-
-  for (var i = 0; i < hilos.length; i++) {
-    var mensajes = hilos[i].getMessages();
-    for (var j = 0; j < mensajes.length; j++) {
-      var mensaje = mensajes[j];
-      if (mensaje.isUnread()) {
-        var cuerpo = mensaje.getPlainBody(); 
-        var asunto = mensaje.getSubject();
-        
-        var regexFlexible = /ARV[\s-]?[0-9]{3,}/i; 
-        var matchID = cuerpo.match(regexFlexible) || asunto.match(regexFlexible); 
-        
-        var montoEncontrado = 0;
-        var matchMontoAsunto = asunto.match(/\$\s?([0-9.]+)/);
-        if (matchMontoAsunto) {
-           montoEncontrado = limpiarPrecio(matchMontoAsunto[1]);
-        } else {
-           var matchMontoCuerpo = cuerpo.match(/\$\s?([0-9.]+)/);
-           if (matchMontoCuerpo) montoEncontrado = limpiarPrecio(matchMontoCuerpo[1]);
-        }
-
-        if (matchID && montoEncontrado > 0) {
-          var idDetectado = matchID[0]; 
-          var resultado = validarYAprobar(idDetectado, montoEncontrado, sheet, data, mensaje, false);
-          
-          // 🛠️ ARREGLO BOT: Marca como leído sea cual sea el resultado exitoso
-          if (resultado === "APROBADO" || resultado === "YA_PAGADO") {
-             GmailApp.markMessageRead(mensaje); 
-             console.log("Pago procesado vía " + origenNombre + ": " + idDetectado);
-          } 
-        }
-      }
-    }
-  }
-}
+// --- 4. ROBOT MULTIBANCO (ELIMINADO) ---
+// La conciliación de pagos ahora se gestiona de forma segura a través del link de aprobación manual de Felipe
+// o cambiando el estado a "Pagado" directamente en la planilla de cálculo.
 
 // --- 5. LÓGICA DE APROBACIÓN (CENTRAL Y ÚNICA) ---
 function validarYAprobar(idBuscado, montoRecibido, sheetPedidos, dataPedidos, mensajeOriginal, forzarManual) {
@@ -449,6 +394,11 @@ function doGet(e) {
   if (action === "obtenerTodo") return obtenerTodoJSON();
   var idTarget = e.parameter.id;
   if (action === "aprobar" && idTarget) {
+    var token = e.parameter.token;
+    if (token !== API_TOKEN) {
+       return HtmlService.createHtmlOutput("<h1 style='color:red;'>❌ Acceso no autorizado</h1>");
+    }
+    
     var doc = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = doc.getSheetByName("Pedidos");
     var data = sheet.getDataRange().getValues();
@@ -930,4 +880,35 @@ function obtenerTodoJSON() {
   return ContentService.createTextOutput(JSON.stringify({
     config: config, cupones: cupones, tarifas: tarifas, carrusel: slides, resenas: resenas, productos: productos
   })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// --- 13. LIMPIEZA AUTOMÁTICA DE RESERVAS EXPIRADAS ---
+function limpiarReservasExpiradas() {
+  var doc = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetRes = doc.getSheetByName("Reservas");
+  if (!sheetRes) return;
+
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000); // Esperar hasta 10 segundos
+    var data = sheetRes.getDataRange().getValues();
+    var ahora = Date.now();
+    var filasBorradas = 0;
+
+    // Iteramos de abajo hacia arriba para evitar desordenar los índices al borrar
+    for (var i = data.length - 1; i >= 1; i--) {
+      var tiempo = new Date(data[i][2]).getTime();
+      if (isNaN(tiempo) || (ahora - tiempo > 10 * 60 * 1000)) {
+        sheetRes.deleteRow(i + 1);
+        filasBorradas++;
+      }
+    }
+    if (filasBorradas > 0) {
+      console.log("🧹 Se limpiaron " + filasBorradas + " reservas de stock expiradas.");
+    }
+  } catch (e) {
+    console.error("Error al limpiar reservas expiradas: " + e.toString());
+  } finally {
+    lock.releaseLock();
+  }
 }

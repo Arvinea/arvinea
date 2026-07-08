@@ -305,6 +305,12 @@ h1, h2, h3,
 #det-obs { 
     width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 12px;
     font-family: inherit; margin-bottom: 20px; resize: none; height: 80px;
+    box-sizing: border-box; transition: all 0.2s ease;
+}
+#det-obs:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(45, 79, 30, 0.1);
 }
 .btn-confirmar-agregar {
     width: 100%; background: var(--primary); color: white; padding: 14px; border: none;
@@ -338,13 +344,14 @@ h1, h2, h3,
 .sidebar-footer { padding: 20px; background: #fafafa; border-top: 1px solid #eee; }
 .total-row { display: flex; justify-content: space-between; font-size: 1.4rem; font-weight: 700; margin-bottom: 15px; color: var(--text-main); }
 
-.btn-continuar, .btn-pagar, .btn-volver {
-    width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+.btn-continuar, .btn-pagar, .btn-volver, .btn-primary {
+    width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; box-sizing: border-box;
 }
-.btn-continuar, .btn-pagar { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(45, 79, 30, 0.2); }
-.btn-continuar:hover, .btn-pagar:hover { background: var(--primary-dark); transform: translateY(-2px); }
+.btn-continuar, .btn-pagar, .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(45, 79, 30, 0.2); }
+.btn-continuar:hover, .btn-pagar:hover, .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
 .btn-volver { background: #e0e0e0; color: #555; }
-.btn-volver:hover { background: #d0d0d0; }
+.btn-volver:hover { background: #d0d0d0; transform: translateY(-2px); }
 
 /* Botón flotante */
 .btn-flotante {
@@ -377,9 +384,14 @@ h1, h2, h3,
 .form-grupo label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #555; }
 .form-grupo input, .form-grupo select { 
     width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; 
-    font-size: 1rem; box-sizing: border-box; transition: 0.2s; background: #fafafa;
+    font-size: 1rem; box-sizing: border-box; transition: all 0.2s ease; background: #fafafa;
 }
-.form-grupo input:focus, .form-grupo select:focus { border-color: var(--primary); background: white; outline: none; }
+.form-grupo input:focus, .form-grupo select:focus { 
+    border-color: var(--primary); 
+    background: white; 
+    outline: none; 
+    box-shadow: 0 0 0 3px rgba(45, 79, 30, 0.1);
+}
 .nota-input { font-size: 0.8rem; color: #999; margin-top: 5px; font-style: italic; }
 
 .total-final { font-size: 3rem !important; color: var(--primary) !important; margin: 10px 0 !important; }
@@ -582,31 +594,7 @@ h1, h2, h3,
 .txt-destacado { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; } /* Resaltador Amarillo */
 
 /* BOTÓN PRINCIPAL (VERDE GIGANTE) */
-.btn-primary {
-    background: var(--primary); /* Verde Arvinea */
-    color: white;
-    width: 100%;
-    padding: 18px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(45, 79, 30, 0.3);
-    transition: transform 0.2s, background 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.btn-primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-}
-
-.btn-primary:disabled {
+.btn-primary:disabled, .btn-pagar:disabled, .btn-continuar:disabled, .btn-volver:disabled {
     background: #ccc;
     cursor: wait;
     transform: none;
