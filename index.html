@@ -28,8 +28,9 @@
             </div>
             
             <div class="search-wrapper">
-                <input type="text" id="buscador" placeholder="Buscar productos..." onkeyup="filtrarProductos()">
-                <button><i class="fas fa-search"></i></button>
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="buscador" placeholder="¿Qué buscas hoy?" oninput="filtrarProductos(this.value)">
+                <i class="fas fa-times-circle clear-search-icon" id="clear-search" style="display:contents;" onclick="limpiarBuscador()"></i>
             </div>
 
             <div class="cart-icon-container" onclick="toggleCarrito()">
@@ -104,6 +105,9 @@
             <h3 id="modal-titulo" class="modal-prod-title">Producto</h3>
             
             <div class="modal-body-scroll">
+                <div class="modal-image-zoom-container">
+                    <img id="modal-img" src="" class="zoomable-image" alt="Producto">
+                </div>
                 <p id="modal-desc" class="prod-description">...</p>
                 
                 <div class="nutri-box">
@@ -124,10 +128,22 @@
             <span class="close-sidebar" onclick="toggleCarrito()">&times;</span>
         </div>
         
-        <div class="tabs">
-            <div class="tab active" id="tab-pedido">Pedido</div>
-            <div class="tab" id="tab-checkout">Datos</div>
-            <div class="tab" id="tab-pago">Pago</div>
+        <div class="steps-progress-container">
+            <div class="step-progress-line">
+                <div class="step-progress-line-fill" id="progress-bar-fill"></div>
+            </div>
+            <div class="step-item active" id="step-pedido">
+                <span class="step-number">1</span>
+                <span class="step-label">Pedido</span>
+            </div>
+            <div class="step-item" id="step-checkout">
+                <span class="step-number">2</span>
+                <span class="step-label">Datos</span>
+            </div>
+            <div class="step-item" id="step-pago">
+                <span class="step-number">3</span>
+                <span class="step-label">Pago</span>
+            </div>
         </div>
 
         <div id="vista-pedido" class="sidebar-body">
@@ -216,7 +232,7 @@
     </div>
     <div id="sidebar-overlay" class="overlay-oscuro" onclick="toggleCarrito()"></div>
 
-    <div id="modal-detalle" class="modal-overlay" style="display:none;">
+    <div id="modal-detalle" class="modal-overlay" style="display:none;" onclick="if(event.target === this) cerrarDetalle()">
         <div class="detalle-card">
             <span class="close-modal" onclick="cerrarDetalle()">&times;</span>
             <h2 id="det-nombre">Producto</h2>
@@ -254,8 +270,13 @@
         </div>
     </div>
 
-    <div id="btn-subir" onclick="window.scrollTo(0,0)"><i class="fas fa-arrow-up"></i></div>
+    <div id="btn-subir" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"><i class="fas fa-arrow-up"></i></div>
+    
+    <!-- Botón de WhatsApp Flotante -->
+    <a href="#" class="btn-whatsapp-flotante" id="btn-wa" target="_blank" rel="noopener noreferrer" style="display: none;">
+        <i class="fab fa-whatsapp"></i>
+    </a>
 
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
 </body>
 </html>

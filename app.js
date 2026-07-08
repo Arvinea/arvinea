@@ -16,16 +16,62 @@ let codigoAplicado = ""; // Para saber qué cupón usó
 const SHEET_API = 'https://script.google.com/macros/s/AKfycbxawZ6c_k3BxNCOFCub3CIIZcuC3PACLaPyrfL8LcMH_Bc-gHK7qxqlVtUFyKhSbldDcA/exec';
 
 
+// --- NOTIFICACIONES TOAST ---
+function mostrarToast(mensaje, tipo = 'success') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${tipo}`;
+    
+    const icon = tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    toast.innerHTML = `<i class="fas ${icon}"></i> <span>${mensaje}</span>`;
+    
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+
 // --- CARGAR PRODUCTOS Y CREAR BOTONES (DINÁMICO TOTAL) ---
 
 // --- FUNCIONES DE RENDERIZADO INSTANTÁNEO ---
 
+let promobarInterval = null;
 function aplicarConfiguracionVisual() {
-    if (configGlobal.MensajeBarra) {
-        const barra = document.getElementById('promo-bar');
-        if(barra) {
-            document.getElementById('promo-texto').innerText = configGlobal.MensajeBarra;
-            barra.style.display = 'block';
+    const barra = document.getElementById('promo-bar');
+    const texto = document.getElementById('promo-texto');
+    if (barra && texto) {
+        const mensajes = [
+            configGlobal.Promo_Rotativa_1 || configGlobal.MensajeBarra,
+            configGlobal.Promo_Rotativa_2,
+            configGlobal.Promo_Rotativa_3
+        ].filter(Boolean);
+        
+        // Fallback si no hay mensajes configurados en el Excel
+        if (mensajes.length === 0) {
+            mensajes.push("🍃 Conservas artesanales, 100% naturales y orgánicas");
+        }
+        
+        let idx = 0;
+        texto.innerText = mensajes[idx];
+        barra.style.display = 'block';
+        
+        if (promobarInterval) clearInterval(promobarInterval);
+        if (mensajes.length > 1) {
+            promobarInterval = setInterval(() => {
+                idx = (idx + 1) % mensajes.length;
+                texto.style.opacity = 0;
+                setTimeout(() => {
+                    texto.innerText = mensajes[idx];
+                    texto.style.opacity = 1;
+                }, 300);
+            }, 6000);
         }
     }
     if (configGlobal.TiendaAbierta && configGlobal.TiendaAbierta.toUpperCase() === "NO") {
@@ -33,12 +79,21 @@ function aplicarConfiguracionVisual() {
             const botones = document.querySelectorAll('.btn-agregar');
             botones.forEach(btn => {
                 btn.disabled = true;
-                btn.innerHTML = "Cerrado Temporalmente";
+                btn.innerHTML = "Cerrado Temporadamente";
                 btn.style.background = "#95a5a6";
                 btn.style.cursor = "not-allowed";
             });
-            alert("⚠️ AVISO: La tienda está en pausa operativa. Puedes ver los productos pero no comprar por el momento.");
+            mostrarToast("La tienda está en pausa operativa. Puedes ver los productos pero no comprar por el momento.", "warning");
         }, 500);
+    }
+
+    // Configurar Botón de WhatsApp Flotante
+    const waBtn = document.getElementById('btn-wa');
+    if (waBtn) {
+        const telContacto = configGlobal.WhatsApp || configGlobal.Telefono || "56936302324";
+        const numLimpio = String(telContacto).replace(/[^0-9]/g, '');
+        waBtn.href = `https://wa.me/${numLimpio}?text=Hola%20Arvinea!%20Me%20gustar%C3%ADa%20hacer%20una%20consulta.`;
+        waBtn.style.display = 'flex';
     }
 }
 
@@ -49,11 +104,30 @@ function renderizarCarrusel(slides) {
         contenedorSlides.innerHTML = `<div class="slide active" style="background-image: url('img/hero1.jpg');"><div class="hero-content"><h1>Arvinea Organic</h1></div></div>`;
         return; 
     }
+    
+    // Configuración dinámica desde Google Sheets con fallbacks si no existen
+    const badgeText1 = configGlobal.Badge_Hero_1 || "100% Natural";
+    const badgeText2 = configGlobal.Badge_Hero_2 || "Cosecha Artesanal";
+    const badgeText3 = configGlobal.Badge_Hero_3 || "Despacho RM";
+    
+    const badgeIcon1 = configGlobal.Badge_Icon_1 || "fa-leaf";
+    const badgeIcon2 = configGlobal.Badge_Icon_2 || "fa-hand-holding-heart";
+    const badgeIcon3 = configGlobal.Badge_Icon_3 || "fa-truck";
+
     let html = '';
     slides.forEach((slide, index) => {
         const activeClass = index === 0 ? 'active' : '';
         let btnHtml = (slide.btnTexto && slide.btnLink) ? `<button onclick="${slide.btnLink}">${slide.btnTexto}</button>` : '';
-        html += `<div class="slide ${activeClass}" style="background-image: url('${slide.imagen}');"><div class="hero-content"><h1>${slide.titulo}</h1><p>${slide.texto}</p>${btnHtml}</div></div>`;
+        
+        let badgesHtml = `
+            <div class="hero-badges-container">
+                <span class="hero-badge"><i class="fas ${badgeIcon1}"></i> ${badgeText1}</span>
+                <span class="hero-badge"><i class="fas ${badgeIcon2}"></i> ${badgeText2}</span>
+                <span class="hero-badge"><i class="fas ${badgeIcon3}"></i> ${badgeText3}</span>
+            </div>
+        `;
+        
+        html += `<div class="slide ${activeClass}" style="background-image: url('${slide.imagen}');"><div class="hero-content"><h1>${slide.titulo}</h1><p>${slide.texto}</p>${badgesHtml}${btnHtml}</div></div>`;
     });
     contenedorSlides.innerHTML = html;
     slideIndex = 0; 
@@ -281,7 +355,7 @@ function prepararCompra(nombreProducto) {
 
     // Validación extra por si acaso
     if (disponibleParaCliente <= 0) {
-        alert("Producto Agotado");
+        mostrarToast("Producto Agotado", "warning");
         return;
     }
 
@@ -303,6 +377,7 @@ function prepararCompra(nombreProducto) {
     
     // Mostramos el modal
     document.getElementById('modal-detalle').style.display = 'flex';
+    document.body.classList.add('body-no-scroll');
 }
 
 function abrirDetalle(nombre, precio, imagen, stockDisponible) {
@@ -317,6 +392,7 @@ function abrirDetalle(nombre, precio, imagen, stockDisponible) {
     document.getElementById('det-obs').value = ''; 
     actualizarTotalModal();
     document.getElementById('modal-detalle').style.display = 'flex';
+    document.body.classList.add('body-no-scroll');
 }
 
 function cambiarCantidad(delta) {
@@ -358,7 +434,7 @@ function cambiarCantidadCarrito(index, delta) {
     if (delta > 0) {
         // Si al sumar 1 nos pasamos del stock real, bloqueamos
         if (cantidadTotalEnCarro + 1 > stockMaximo) {
-            alert(`Stock limitado. Máximo disponible: ${stockMaximo}`);
+            mostrarToast(`Stock limitado. Máximo disponible: ${stockMaximo}`, "warning");
             return;
         }
     }
@@ -412,7 +488,7 @@ function confirmarAgregarAlCarrito() {
 
     const maximoPermitido = productoTemporal.stock - STOCK_SEGURIDAD;
     if (cantidad > maximoPermitido) {
-        alert("Stock insuficiente."); return; 
+        mostrarToast("Stock insuficiente.", "warning"); return; 
     }
 
     // Crear ítem
@@ -433,7 +509,7 @@ function confirmarAgregarAlCarrito() {
     cerrarDetalle(); // Antes decía cerrarModal() y esa función no existía
     
     // Feedback visual opcional
-    // alert("¡Producto agregado!"); 
+    mostrarToast("¡Producto agregado al carrito! 🛒", "success");
 }
 
 // --- 4. BUSCADOR Y FILTROS (CORREGIDO) ---
@@ -447,6 +523,12 @@ function filtrarProductos(filtroTexto) {
 
     const termino = input.value.toUpperCase().trim();
     const items = document.getElementsByClassName('product-card'); 
+    
+    // Mostrar/ocultar botón de limpiar "X"
+    const clearBtn = document.getElementById('clear-search');
+    if (clearBtn) {
+        clearBtn.style.display = termino ? 'block' : 'none';
+    }
     
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
@@ -465,11 +547,60 @@ function filtrarProductos(filtroTexto) {
     }
 }
 
+function limpiarBuscador() {
+    const input = document.getElementById('buscador');
+    if (input) {
+        input.value = '';
+        filtrarProductos('');
+    }
+}
+
 // Listener para escribir en el buscador
 // INICIALIZADOR MAESTRO (1 Sola Petición)
 document.addEventListener("DOMContentLoaded", async () => {
     const mainCatalogo = document.getElementById('catalogo');
-    if(mainCatalogo) mainCatalogo.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Conectando con Arvinea...</div>';
+    if(mainCatalogo) {
+        const skeletonCardHTML = `
+            <div class="skeleton-card">
+                <div class="skeleton-img skeleton-pulse"></div>
+                <div class="skeleton-info">
+                    <div class="skeleton-line skeleton-pulse" style="width: 70%; height: 22px; margin-bottom: 10px;"></div>
+                    <div class="skeleton-line skeleton-pulse" style="width: 40%; height: 16px; margin-bottom: 20px;"></div>
+                    <div class="skeleton-line skeleton-pulse" style="width: 100%; height: 42px;"></div>
+                </div>
+            </div>
+        `;
+        mainCatalogo.innerHTML = `<div class="grid-productos">${skeletonCardHTML.repeat(4)}</div>`;
+    }
+
+    // Configurar Zoom Lupa en el Modal de Ficha Técnica
+    const zoomContainer = document.querySelector('.modal-image-zoom-container');
+    const zoomImage = document.getElementById('modal-img');
+    if (zoomContainer && zoomImage) {
+        zoomContainer.addEventListener('mousemove', (e) => {
+            const rect = zoomContainer.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            zoomImage.style.transformOrigin = `${x}% ${y}%`;
+            zoomImage.style.transform = 'scale(1.8)';
+        });
+        zoomContainer.addEventListener('mouseleave', () => {
+            zoomImage.style.transform = 'scale(1)';
+            zoomImage.style.transformOrigin = 'center center';
+        });
+    }
+
+    // Configurar Botón Volver Arriba
+    const btnSubir = document.getElementById('btn-subir');
+    if (btnSubir) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                btnSubir.style.display = 'flex';
+            } else {
+                btnSubir.style.display = 'none';
+            }
+        });
+    }
 
     try {
         // ¡MAGIA! Descargamos TODO en una sola llamada súper rápida
@@ -532,6 +663,8 @@ function abrirModalInfo(nombreProducto) {
 
     // 2. Llenamos los datos
     document.getElementById('modal-titulo').innerText = producto.nombre;
+    const modalImg = document.getElementById('modal-img');
+    if (modalImg) modalImg.src = producto.imagen || '';
     
     // Aquí el texto largo se inserta seguro, respetando saltos de línea
     const descLimpia = producto.descripcion ? producto.descripcion.replace(/'/g, "\\'") : ""; // Limpieza básica
@@ -557,14 +690,18 @@ function abrirModalInfo(nombreProducto) {
 
     // 4. Mostrar Modal
     document.getElementById('modal-info-producto').style.display = 'flex';
+    document.body.classList.add('body-no-scroll');
 }
 
 function cerrarModalInfo() {
     document.getElementById('modal-info-producto').style.display = 'none';
+    document.body.classList.remove('body-no-scroll');
 }
 
-function cerrarModalInfo() { document.getElementById('modal-info-producto').style.display = 'none'; }
-function cerrarDetalle() { document.getElementById('modal-detalle').style.display = 'none'; }
+function cerrarDetalle() {
+    document.getElementById('modal-detalle').style.display = 'none';
+    document.body.classList.remove('body-no-scroll');
+}
 
 function toggleCarrito() {
     const sidebar = document.getElementById('sidebar-carrito');
@@ -572,6 +709,12 @@ function toggleCarrito() {
     if (!sidebar.classList.contains('active')) volverAPedido();
     sidebar.classList.toggle('active');
     overlay.classList.toggle('active');
+    
+    if (sidebar.classList.contains('active')) {
+        document.body.classList.add('body-no-scroll');
+    } else {
+        document.body.classList.remove('body-no-scroll');
+    }
 }
 
 function actualizarCarritoUI() {
@@ -626,8 +769,10 @@ function actualizarCarritoUI() {
     if (btnFlotante) {
         if (carrito.length > 0) {
             btnFlotante.style.display = 'flex';
+            document.body.classList.add('cart-active');
         } else {
             btnFlotante.style.display = 'none';
+            document.body.classList.remove('cart-active');
         }
     }
     document.getElementById('sidebar-total').innerText = totalTexto;
@@ -641,7 +786,7 @@ function eliminarItem(index) {
 
 // --- 6. CHECKOUT Y ENVIO ---
 function irADatos() {
-    if(carrito.length === 0) { alert("Tu carrito está vacío 🍃"); return; }
+    if(carrito.length === 0) { mostrarToast("Tu carrito está vacío 🍃", "warning"); return; }
     cambiarPestaña('tab-checkout', 'vista-checkout', 'btns-paso-2');
 }
 
@@ -652,10 +797,10 @@ function irAPago() {
     const email = document.getElementById('cliente-email').value;
 
     if(!nombre || !validarTelefono(fono) || !validarEmail(email)) {
-        alert("Por favor revisa tus datos."); return;
+        mostrarToast("Por favor revisa tus datos.", "warning"); return;
     }
     if (tipoEntrega === 'delivery' && costoEnvioSeleccionado === 0) {
-        alert("Por favor selecciona tu Región para el envío."); return;
+        mostrarToast("Por favor selecciona tu Región para el envío.", "warning"); return;
     }
 
     // 2. Cálculos Base (Subtotal y Promos Automáticas 2x1 / 3x2)
@@ -777,13 +922,30 @@ function volverAPedido() { cambiarPestaña('tab-pedido', 'vista-pedido', 'btn-pa
 function volverADatos() { cambiarPestaña('tab-checkout', 'vista-checkout', 'btns-paso-2'); document.getElementById('footer-total-row').style.display = 'flex'; }
 
 function cambiarPestaña(tabId, vistaId, btnGroupId) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    const stepId = tabId.replace('tab-', 'step-'); // Retrocompatibilidad para llamadas existentes
+    
+    document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active', 'completed'));
     document.querySelectorAll('.sidebar-body').forEach(v => v.style.display = 'none');
     document.getElementById('btn-paso-1').style.display = 'none';
     document.getElementById('btns-paso-2').style.display = 'none';
     document.getElementById('btns-paso-3').style.display = 'none';
 
-    document.getElementById(tabId).classList.add('active');
+    // Rellenar barra de progreso
+    const steps = ['step-pedido', 'step-checkout', 'step-pago'];
+    const activeIndex = steps.indexOf(stepId);
+    const progressFill = document.getElementById('progress-bar-fill');
+    if (progressFill) {
+        progressFill.style.width = (activeIndex * 50) + '%';
+    }
+
+    steps.forEach((id, idx) => {
+        const elem = document.getElementById(id);
+        if (elem) {
+            if (idx === activeIndex) elem.classList.add('active');
+            if (idx < activeIndex) elem.classList.add('completed');
+        }
+    });
+
     document.getElementById(vistaId).style.display = 'block';
     
     const btnGroup = document.getElementById(btnGroupId);
@@ -799,10 +961,10 @@ async function procesarPedidoFinal() {
     let ubicacionFinal = "";
     if (tipoEntrega === 'delivery') {
         ubicacionFinal = document.getElementById('cliente-direccion').value;
-        if(!ubicacionFinal) { alert("Ingresa tu dirección."); return; }
+        if(!ubicacionFinal) { mostrarToast("Ingresa tu dirección.", "warning"); return; }
     } else {
         ubicacionFinal = document.getElementById('lugar-retiro').value;
-        if(!ubicacionFinal) { alert("Selecciona punto de retiro."); return; }
+        if(!ubicacionFinal) { mostrarToast("Selecciona punto de retiro.", "warning"); return; }
     }
 
     let subtotal = 0;
@@ -873,7 +1035,7 @@ async function procesarPedidoFinal() {
         const respuestaJson = await response.json();
 
         if (respuestaJson.result === "error") {
-            alert(respuestaJson.error); 
+            mostrarToast(respuestaJson.error, "warning"); 
             btn.innerHTML = textoOriginal;
             btn.disabled = false;
             return;
@@ -894,7 +1056,7 @@ async function procesarPedidoFinal() {
         if(document.getElementById('real-link-gestion')) document.getElementById('real-link-gestion').value = linkAprobar;
     } catch (error) {
         console.error('Error:', error);
-        alert('Error de conexión.');
+        mostrarToast("Error de conexión.", "warning");
         btn.innerHTML = textoOriginal;
         btn.disabled = false;
     }
@@ -1039,11 +1201,11 @@ async function solicitarReservaStock() {
             irAPago();
         } else {
             // Error: Alguien ganó el stock
-            alert("⚠️ " + resultado.error);
+            mostrarToast(resultado.error, "warning");
         }
     } catch (e) {
         console.error(e);
-        alert("Error de conexión. Intenta de nuevo.");
+        mostrarToast("Error de conexión. Intenta de nuevo.", "warning");
     } finally {
         // 3. RESTAURAR BOTÓN SI FALLA O AL TERMINAR
         if(btn) { 
